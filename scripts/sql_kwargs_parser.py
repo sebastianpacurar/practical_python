@@ -37,6 +37,7 @@ class AggregateFunctions(Enum):
     MAX = 'MAX({})'
     MIN = 'MIN({})'
     COUNT = 'COUNT({})'
+    BETWEEN = '{} BETWEEN {} and {}'
 
 
 def get_int_or_zero(x):
@@ -53,6 +54,15 @@ def get_list_or_zero(x):
 def str_val(x):
     words = len(x.split(' '))
     return f'"{x}"' if words > 1 else x
+
+
+def and_or_operator(x):
+    if x.startswith('&'):
+        return 'AND'
+    elif x.startswith('|'):
+        return 'OR'
+    else:
+        raise ValueError(f'Issue with {x}, and {x[0]}')
 
 
 def format_cols_query(cols):
@@ -79,20 +89,23 @@ def format_cols_query(cols):
     return ',\n\t'.join(form_cols)
 
 
-def verify_between_agg(expression):
+def get_between_agg(expression):
     is_valid = False
     res = None
-    number_pattern = r'\b\d+\.\d+?\b'
-    letter_pattern = r'[A-Za-z]+'
+
+    number_pattern = r'\b\d+(?:\.\d+)?\b'
+    letter_pattern = r'[A-Za-z_]+'
 
     numbers = re.findall(number_pattern, expression)
     letters = re.findall(letter_pattern, expression)
 
     if len(numbers) > 0 and len(letters) == 1:
-        is_valid = True
         numbers_with_letters = numbers.copy()
         numbers_with_letters.insert(1, letters[0])
-        res = numbers_with_letters
+
+        if len(numbers_with_letters) > 2:
+            is_valid = True
+            res = numbers_with_letters
 
     return is_valid, res
 
@@ -119,7 +132,6 @@ def table(db, name, **kwargs):
         :keyword limit: (int, optional): The maximum number of rows to return. works with negative/positive numbers
         :keyword offset: (int, optional): Set offset of limit.
     """
-    filtered = False
     name = f'"{name}"' if len(name.split(' ')) > 1 else name
     distinct = 'DISTINCT ' if kwargs.get('distinct', False) else ''
     count = 'COUNT(*) AS items_count' if kwargs.get('count', False) else ''
@@ -134,29 +146,28 @@ def table(db, name, **kwargs):
 
     # handle contains=[] / starts_with=[] / ends_with=[] kwargs
     if filter_conditions:
-        filtered = True
-        condition = filter_conditions[0]
-        col, col_val = kwargs.get(condition)
-        formatted_like = FilterCondition[condition.upper()].value.format(col_val)
-        query += f'WHERE {col} {formatted_like} \n'
+        cond = filter_conditions[0]
+        col, col_val = kwargs.get(cond)
+        formatted_like = FilterCondition[cond.upper()].value.format(col_val)
+        query += f'WHERE {col} {formatted_like}\n'
 
     # handle where=[] arg
     # TODO: fix for included AND (&) OR (|) operators in each condition (change whole logic)
     if 'where' in kwargs:
-        choice, *options = kwargs.get('where', [])
-        if get_list_or_zero(options) != 0:
-            is_first_valid, first_cond = verify_between_agg(options[0])
-            if is_first_valid:
-                sql = f'{"WHERE" if not filtered else ""} {first_cond[1]} BETWEEN {first_cond[0]} AND {first_cond[2]}\n'
-            else:
-                sql = f'{choice.upper()} ' if filtered else 'WHERE '
-            for condition in options[1:]:
-                is_valid, cond = verify_between_agg(condition)
-                if is_valid:
-                    sql += f'{cond[1]} BETWEEN {cond[0]} AND {cond[2]}\n'
+        options = kwargs.get('where', [])
+        if get_list_or_zero(options):
+            for i, cond in enumerate(options):
+                or_and_choice = and_or_operator(cond)
+                if "WHERE" not in query:
+                    start = "WHERE"
                 else:
-                    sql += f'\t{choice} {condition}\n'
-            query += sql
+                    start = f'\t{or_and_choice}' if i > 0 else f'\t{or_and_choice}'
+                is_between_agg, agg_vals = get_between_agg(cond[1:])
+                if is_between_agg:
+                    low, col, high = agg_vals
+                    query += f'{start} {AggregateFunctions.BETWEEN.value.format(col, low, high)}\n'
+                else:
+                    query += f'{start} {cond[1:]}\n'
 
     # handle order_by kwarg
     if 'order_by' in kwargs:
@@ -241,9 +252,12 @@ def categories_img(db, num_cols):
 if __name__ == '__main__':
     t = table(db=NC, name='Order Details',
               cols=['UnitPrice'], distinct=True,
-              where=['AND', '20.0 >= UnitPrice <= 70.0'],
+              where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
               order_by=['UnitPrice', -1],
               limit=5, offset=2)
+    print(t)
+
+    t = table(db=NC, name='Order Details', cols=['UnitPrice'], distinct=True, where=['&20.0 >= UnitPrice <= 70.0'], order_by=['UnitPrice', -1], limit=5, offset=2)
     print(t)
 
     t = table(db=NC, name='Order Details',
