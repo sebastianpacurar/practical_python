@@ -1,10 +1,11 @@
 import io
 import sqlite3
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 import pandas as pd
 from matplotlib import pyplot as plt
 from PIL import Image
 
+from scripts.sql_parser.table_operations import *
 from utils import *
 from enums import FilterCondition
 
@@ -32,21 +33,21 @@ class SqlParser:
     def table(
             self,
             name: str,
-            cols: [List[str]] = '*',
-            contains: Optional[Tuple[str, str]] = None,
-            starts_with: Optional[Tuple[str, str]] = None,
-            ends_with: Optional[Tuple[str, str]] = None,
-            distinct: bool = False,
-            count: bool = False,
+            cols: Optional[List[str]] = '*',
+            contains: Optional[Tuple[str, Union[str, int, float]]] = None,
+            starts_with: Optional[Tuple[str, Union[str, int, float]]] = None,
+            ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
+            distinct: Optional[bool] = False,
+            count: Optional[bool] = False,
             where: Optional[List[str]] = None,
             order_by: Optional[Tuple[str, int]] = None,
-            limit: int = 0,
-            offset: int = 0,
-            subq: bool = False,
-    ) -> pd.DataFrame:
-        name = f'"{name}"' if len(name.split(' ')) > 1 else name
-        distinct = 'DISTINCT ' if distinct else ''
-        count = 'COUNT(*) AS items_count' if count else ''
+            limit: Optional[int] = 0,
+            offset: Optional[int] = 0,
+            subq: Optional[bool] = False
+    ) -> Union[pd.DataFrame, str]:
+        name = str_val(name)
+        distinct = get_distinct_sql(distinct)
+        count = 'COUNT(*) AS items_count' if count else ''  # TODO: change or remove!
         t_cols = '*'
 
         # handle cols=[] kwarg
@@ -55,52 +56,44 @@ class SqlParser:
 
         query = f'SELECT {distinct}{t_cols}\nFROM {name} \n'
 
-        # handle contains=[] / starts_with=[] / ends_with=[] kwargs
-        if contains or starts_with or ends_with:
-            cond = 'contains' if contains else 'starts_with' if starts_with else 'ends_with'
-            col, col_val = contains if contains else starts_with if starts_with else ends_with
-            formatted_like = FilterCondition[cond.upper()].value.format(col_val)
-            query += f'WHERE {col} {formatted_like}\n'
-
-        # handle where=[] arg
-        if where:
-            if get_list_or_zero(where):
-                for i, cond in enumerate(where):
-                    or_and_choice = and_or_operator(cond)
-                    if "WHERE" not in query:
-                        start = "WHERE"
-                    else:
-                        start = f'\t{or_and_choice}' if i > 0 else f'\t{or_and_choice}'
-                    is_between_agg, agg_vals = get_between_agg(cond[1:])
-                    if is_between_agg:
-                        low, col, high = agg_vals
-                        query += f'{start} {AggregateFunctions.BETWEEN.value.format(col, low, high)}\n'
-                    else:
-                        query += f'{start} {cond[1:]}\n'
-
-        # handle order_by kwarg
-        if order_by:
-            col, direction = order_by
-            query += f'ORDER BY {col} {"ASC" if int(direction) >= 0 else "DESC"}\n'
-
-        # handle limit kwarg
-        if limit:
-            lim = get_int_or_zero(limit)
-            if lim != 0:
-                if not order_by and lim < 0:
-                    query += 'ORDER BY 1 DESC\n'
-                query += f'LIMIT {abs(lim)}'
-
-                if offset:
-                    off_val = get_int_or_zero(offset)
-                    if off_val > 0:
-                        query += f' OFFSET {off_val}'
+        query += get_like_sql(contains, starts_with, ends_with)
+        query += get_where_sql(query, where)
+        query += get_order_by_sql(order_by)
+        query += get_limit_sql(limit, offset, order_by)
 
         # handle count kwarg
         if count:
             query = f'SELECT {count} FROM ({query})'
 
         # return the query string if subq=True
+        res = query if subq is True else self.exec_query(query)
+        print(f'\n{query}\n')
+
+        return res
+
+    def join(
+            self,
+            table_left: Tuple[str, List[str]],
+            table_right: Union[str, Tuple[str, List[str]]],
+            shared_col: str,
+            j_type: Optional[str] = 'i',
+            contains: Optional[Tuple[str, Union[str, int, float]]] = None,
+            starts_with: Optional[Tuple[str, Union[str, int, float]]] = None,
+            ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
+            distinct: Optional[bool] = False,
+            where: Optional[List[str]] = None,
+            order_by: Optional[Tuple[str, int]] = None,
+            limit: Optional[int] = 0,
+            subq: Optional[bool] = False
+    ) -> Union[pd.DataFrame, str]:
+        distinct = get_distinct_sql(distinct)
+
+        query = get_join_sql(table_left, table_right, distinct, j_type, shared_col)
+        query += get_like_sql(contains, starts_with, ends_with)
+        query += get_where_sql(query, where)
+        query += get_order_by_sql(order_by)
+        query += get_limit_sql(limit, None, None)
+
         res = query if subq is True else self.exec_query(query)
         print(f'\n{query}\n')
 
@@ -152,9 +145,6 @@ class SqlParser:
         else:
             print("No categories found.")
 
-    def close_connection(self):
-        self.conn.close()
-
 
 if __name__ == '__main__':
     NC_PATH = '../../data_sets/db/northwind.db'
@@ -164,23 +154,30 @@ if __name__ == '__main__':
     nc, sc, cc = SqlParser(NC_PATH), SqlParser(SC_PATH), SqlParser(CC_PATH)
     nct, sct, cct = nc.table, sc.table, cc.table
 
-    # print(nct(name='Order Details',
-    #           cols=['UnitPrice'], distinct=True,
-    #           where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
-    #           order_by=('UnitPrice', -1),
-    #           limit=5, offset=2))
-    #
-    # print(nct(name='Order Details', cols=['UnitPrice'], distinct=True, where=['&20.0 >= UnitPrice <= 70.0'],
-    #           order_by=('UnitPrice', -1), limit=5, offset=2))
-    #
-    # print(nct(name='Order Details',
-    #           cols=['avg=UnitPrice:UP Avg',
-    #                 'max=UnitPrice:UP Max',
-    #                 'min=UnitPrice:UP Min',
-    #                 'count=UnitPrice:UP Count']))
+    print(nct(name='Order Details',
+              cols=['UnitPrice'], distinct=True,
+              where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
+              order_by=('UnitPrice', -1),
+              limit=5, offset=2))
 
-    print(sct(name='Country', limit=-3))
+    print(nct(name='Order Details', cols=['UnitPrice'], distinct=True, where=['&20.0 >= UnitPrice <= 70.0'],
+              order_by=('UnitPrice', -1), limit=5, offset=2))
 
-    # print(cct(name='Cases', count=True, contains=('geoId', 'FR')))
-    #
-    # nc.categories_img(num_cols=3)
+    print(nct(name='Order Details',
+              cols=['avg=UnitPrice:UP Avg',
+                    'max=UnitPrice:UP Max',
+                    'min=UnitPrice:UP Min',
+                    'count=UnitPrice:UP Count']))
+
+    print(nc.join(table_left=('Customers:C', ['CompanyName', 'Phone', 'Fax']),
+                  table_right=('Orders', ['ShipRegion', 'ShipCountry']),
+                  shared_col='CustomerID',
+                  starts_with=('Phone', '3'),
+                  order_by=('ShipRegion', 1),
+                  limit=50,
+                  distinct=True,
+                  j_type='i'))
+
+    print(cct(name='Cases', count=True, contains=('geoId', 'FR')))
+
+    nc.categories_img(num_cols=3)

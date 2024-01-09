@@ -14,8 +14,7 @@ def get_list_or_zero(x):
 
 
 def str_val(x):
-    words = len(x.split(' '))
-    return f'"{x}"' if words > 1 else x
+    return x if x.isalpha() else f'"{x}"'
 
 
 def and_or_operator(x):
@@ -49,6 +48,46 @@ def format_cols_query(cols):
             form_cols.append(f'{col}')
 
     return ',\n\t'.join(form_cols)
+
+
+def format_join_table_data(table_format):
+    # if is_group, then query contains named columns to display
+    is_group = isinstance(table_format, tuple)
+    full_name = table_format[0] if is_group else table_format
+    t_title = full_name
+    formatted_cols = []
+    alias = None
+
+    # perform naming operations and set alias
+    if ':' in full_name:
+        t_title = full_name.replace(':', ' ')
+        t_name, alias = full_name.split(':')
+
+    # append the column text based on Table alias
+    if is_group:
+        for item in table_format[1]:
+            if alias is not None:
+                formatted_cols.append(f'\n\t{alias}.{item}')
+            else:
+                formatted_cols.append(f'\n\t{full_name}.{item}')
+    # append get all columns syntax
+    else:
+        formatted_cols.append(f'\n\t{full_name}.*')
+
+    t_name = alias if alias is not None else full_name
+    return t_name, t_title, formatted_cols
+
+
+def format_join_type(join_type):
+    joins = {
+        'i': 'INNER',
+        'l': 'LEFT',
+        'r': 'RIGHT',
+        'f': 'FULL',
+        'c': 'CROSS'
+    }
+
+    return joins.get(join_type.lower(), 'INNER')
 
 
 def get_between_agg(expression):
