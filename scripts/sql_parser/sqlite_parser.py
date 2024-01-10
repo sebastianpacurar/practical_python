@@ -1,6 +1,6 @@
 import io
 import sqlite3
-from typing import Optional, List, Tuple, Union
+from typing import Optional, List, Tuple, Union, Dict
 import pandas as pd
 from matplotlib import pyplot as plt
 from PIL import Image
@@ -73,9 +73,7 @@ class SqlParser:
 
     def join(
             self,
-            table_left: Tuple[str, List[str]],
-            table_right: Union[str, Tuple[str, List[str]]],
-            shared_col: str,
+            tables: List[Dict[str, Union[str, List[str]]]],
             j_type: Optional[str] = 'i',
             contains: Optional[Tuple[str, Union[str, int, float]]] = None,
             starts_with: Optional[Tuple[str, Union[str, int, float]]] = None,
@@ -88,7 +86,7 @@ class SqlParser:
     ) -> Union[pd.DataFrame, str]:
         distinct = get_distinct_sql(distinct)
 
-        query = get_join_sql(table_left, table_right, distinct, j_type, shared_col)
+        query = get_join_sql(tables, distinct, j_type)
         query += get_like_sql(contains, starts_with, ends_with)
         query += get_where_sql(query, where)
         query += get_order_by_sql(order_by)
@@ -154,30 +152,29 @@ if __name__ == '__main__':
     nc, sc, cc = SqlParser(NC_PATH), SqlParser(SC_PATH), SqlParser(CC_PATH)
     nct, sct, cct = nc.table, sc.table, cc.table
 
-    print(nct(name='Order Details',
-              cols=['UnitPrice'], distinct=True,
-              where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
-              order_by=('UnitPrice', -1),
-              limit=5, offset=2))
+    # print(nct(name='Order Details',
+    #           cols=['UnitPrice'], distinct=True,
+    #           where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
+    #           order_by=('UnitPrice', -1),
+    #           limit=5, offset=2))
+    #
+    # print(nct(name='Order Details', cols=['UnitPrice'], distinct=True, where=['&20.0 >= UnitPrice <= 70.0'],
+    #           order_by=('UnitPrice', -1), limit=5, offset=2))
+    #
+    # print(nct(name='Order Details',
+    #           cols=['avg=UnitPrice:UP Avg',
+    #                 'max=UnitPrice:UP Max',
+    #                 'min=UnitPrice:UP Min',
+    #                 'count=UnitPrice:UP Count']))
 
-    print(nct(name='Order Details', cols=['UnitPrice'], distinct=True, where=['&20.0 >= UnitPrice <= 70.0'],
-              order_by=('UnitPrice', -1), limit=5, offset=2))
-
-    print(nct(name='Order Details',
-              cols=['avg=UnitPrice:UP Avg',
-                    'max=UnitPrice:UP Max',
-                    'min=UnitPrice:UP Min',
-                    'count=UnitPrice:UP Count']))
-
-    print(nc.join(table_left=('Customers:C', ['CompanyName', 'Phone', 'Fax']),
-                  table_right=('Orders', ['ShipRegion', 'ShipCountry']),
-                  shared_col='CustomerID',
+    print(nc.join(tables=([{'name': 'Customers', 'shared': 'CustomerId', 'cols': ['CompanyName', 'Phone', 'Fax']},
+                           {'name': 'Orders:O', 'shared': 'CustomerId', 'cols': ['ShipRegion', 'ShipCountry']}]),
                   starts_with=('Phone', '3'),
                   order_by=('ShipRegion', 1),
                   limit=50,
                   distinct=True,
                   j_type='i'))
 
-    print(cct(name='Cases', count=True, contains=('geoId', 'FR')))
+    # print(cct(name='Cases', count=True, contains=('geoId', 'FR')))
 
-    nc.categories_img(num_cols=3)
+    # nc.categories_img(num_cols=3)

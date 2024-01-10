@@ -64,19 +64,71 @@ def get_like_sql(c, sw, ew):
     return sql
 
 
-def get_join_sql(table_left, table_right, distinct, j_type, shared_col):
-    l_name, l_title, l_cols = format_join_table_data(table_left)
-    r_name, r_title, r_cols = format_join_table_data(table_right)
-    cols = l_cols + r_cols
-    sql = f'SELECT {distinct}'
-    sql += ','.join(cols)
+# covers JOIN clause
+def get_join_sql(tables, distinct, j_type):
+    parsed_names, parsed_titles = [], []
+    formatted_cols = []
 
-    sql += f'\nFROM {l_title}\n'
-    sql += f'{format_join_type(j_type)} JOIN {r_title}\n'
-    sql += f'ON {l_name}.{shared_col} = {r_name}.{shared_col}\n'
+    for t in tables:
+        name, shared_col = t['name'], str_val(t['shared'])
+        t_title = name
+        t_name = name
+        table_alias = None
+
+        #  split table name into name and alias, if ':' is present
+        if ':' in name:
+            t_title = name.replace(':', ' ')
+            elements = name.split(':')
+            t_name, table_alias = str_val(elements[0]), elements[1]
+
+        # format the target columns (these are the ones between SELECT and FROM
+        #  use table alias where necessary
+        if 'cols' in t:
+            cols = map(lambda x: str_val(x), t['cols'])
+            for col in cols:
+                if table_alias is not None:
+                    formatted_cols.append(f'\n\t{table_alias}.{col}')
+                else:
+                    formatted_cols.append(f'\n\t{str_val(name)}.{col}')
+        else:
+            if table_alias is not None:
+                formatted_cols.append(f'\n\t{table_alias}.*')
+            else:
+                formatted_cols.append(f'\n\t{str_val(name)}.*')
+
+        parsed_names.append(t_name)
+        parsed_titles.append(t_title)
+
+    # add "" (quotation marks) to 2 word based title names
+    for i, title in enumerate(parsed_titles):
+        group = title.split(' ')
+        if len(group) > 2:
+
+            for g in group[:-2]:
+                title = f'"{g} '
+            title += f'{group[-2]}" '
+
+            title += group[-1]
+            parsed_titles[i] = title
+
+    # start of query creation here:
+    sql = f'SELECT {distinct}'
+
+    sql += ','.join(formatted_cols)
+    for i, t in enumerate(tables):
+        val = i if i == 0 else i - 1
+
+        if i == 0:
+            sql += f'\nFROM {parsed_titles[0]}\n'
+            continue
+
+        # TODO: need to treat issue with the parsed_name vs alias for table names, otherwise -> ambiguous column name: c.CompanyName
+
+        sql += f'{format_join_type(j_type)} JOIN {parsed_titles[i]} ON {parsed_names[val]}.{t["shared"]} = {parsed_names[i]}.{t["shared"]}\n'
+
     return sql
 
 
-# covers
+# covers DISTINCT clause
 def get_distinct_sql(distinct_param):
     return 'DISTINCT ' if distinct_param is True else ''
