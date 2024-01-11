@@ -7,7 +7,6 @@ from PIL import Image
 
 from scripts.sql_parser.table_operations import *
 from utils import *
-from enums import FilterCondition
 
 ALL_TABLES = 'SELECT name FROM sqlite_master WHERE type="table";'
 
@@ -71,10 +70,10 @@ class SqlParser:
 
         return res
 
-    def join(
+    # TODO: add join on 2 tables back, for simplicity
+    def multi_join(
             self,
             tables: List[Dict[str, Union[str, List[str]]]],
-            j_type: Optional[str] = 'i',
             contains: Optional[Tuple[str, Union[str, int, float]]] = None,
             starts_with: Optional[Tuple[str, Union[str, int, float]]] = None,
             ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
@@ -86,7 +85,10 @@ class SqlParser:
     ) -> Union[pd.DataFrame, str]:
         distinct = get_distinct_sql(distinct)
 
-        query = get_join_sql(tables, distinct, j_type)
+        # grab the formatted tables, and all the columns
+        tables_data, formatted_cols = process_multi_table_join(tables)
+
+        query = get_join_multi_table_sql(tables_data, formatted_cols, distinct)
         query += get_like_sql(contains, starts_with, ends_with)
         query += get_where_sql(query, where)
         query += get_order_by_sql(order_by)
@@ -152,29 +154,39 @@ if __name__ == '__main__':
     nc, sc, cc = SqlParser(NC_PATH), SqlParser(SC_PATH), SqlParser(CC_PATH)
     nct, sct, cct = nc.table, sc.table, cc.table
 
-    # print(nct(name='Order Details',
-    #           cols=['UnitPrice'], distinct=True,
-    #           where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
-    #           order_by=('UnitPrice', -1),
-    #           limit=5, offset=2))
-    #
-    # print(nct(name='Order Details', cols=['UnitPrice'], distinct=True, where=['&20.0 >= UnitPrice <= 70.0'],
-    #           order_by=('UnitPrice', -1), limit=5, offset=2))
-    #
-    # print(nct(name='Order Details',
-    #           cols=['avg=UnitPrice:UP Avg',
-    #                 'max=UnitPrice:UP Max',
-    #                 'min=UnitPrice:UP Min',
-    #                 'count=UnitPrice:UP Count']))
+    print(nct(name='Order Details',
+              cols=['UnitPrice'], distinct=True,
+              where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
+              order_by=('UnitPrice', -1),
+              limit=5, offset=2))
 
-    print(nc.join(tables=([{'name': 'Customers', 'shared': 'CustomerId', 'cols': ['CompanyName', 'Phone', 'Fax']},
-                           {'name': 'Orders:O', 'shared': 'CustomerId', 'cols': ['ShipRegion', 'ShipCountry']}]),
-                  starts_with=('Phone', '3'),
-                  order_by=('ShipRegion', 1),
-                  limit=50,
-                  distinct=True,
-                  j_type='i'))
+    print(nct(name='Order Details', cols=['UnitPrice'], distinct=True, where=['&20.0 >= UnitPrice <= 70.0'],
+              order_by=('UnitPrice', -1), limit=5, offset=2))
 
-    # print(cct(name='Cases', count=True, contains=('geoId', 'FR')))
+    print(nct(name='Order Details',
+              cols=['avg=UnitPrice:UP Avg',
+                    'max=UnitPrice:UP Max',
+                    'min=UnitPrice:UP Min',
+                    'count=UnitPrice:UP Count']))
 
-    # nc.categories_img(num_cols=3)
+    customers_table = get_table(name='Customers:C',
+                                shared='CustomerID',
+                                cols=['CompanyName', 'Phone', 'Fax'])
+    orders_table = get_table(name='Orders:O',
+                             shared='CustomerID',
+                             cols=['ShipRegion', 'ShipCountry'],
+                             join='i')
+    order_details_table = get_table(name='Order Details:OD',
+                                    shared='OrderId',
+                                    cols=['ProductId', 'Quantity', 'UnitPrice'],
+                                    join='l')
+
+    print(nc.multi_join(tables=([customers_table, orders_table, order_details_table]),
+                        starts_with=('Phone', '3'),
+                        order_by=('ShipRegion', 1),
+                        limit=10,
+                        distinct=True))
+
+    print(cct(name='Cases', count=True, contains=('geoId', 'FR')))
+
+    nc.categories_img(num_cols=3)

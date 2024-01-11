@@ -1,3 +1,5 @@
+from typing import Optional, List, Dict
+
 from scripts.sql_parser.enums import FilterCondition
 from scripts.sql_parser.utils import *
 
@@ -65,66 +67,17 @@ def get_like_sql(c, sw, ew):
 
 
 # covers JOIN clause
-def get_join_sql(tables, distinct, j_type):
-    parsed_names, parsed_titles = [], []
-    formatted_cols = []
-
-    for t in tables:
-        name, shared_col = t['name'], str_val(t['shared'])
-        t_title = name
-        t_name = name
-        table_alias = None
-
-        #  split table name into name and alias, if ':' is present
-        if ':' in name:
-            t_title = name.replace(':', ' ')
-            elements = name.split(':')
-            t_name, table_alias = str_val(elements[0]), elements[1]
-
-        # format the target columns (these are the ones between SELECT and FROM
-        #  use table alias where necessary
-        if 'cols' in t:
-            cols = map(lambda x: str_val(x), t['cols'])
-            for col in cols:
-                if table_alias is not None:
-                    formatted_cols.append(f'\n\t{table_alias}.{col}')
-                else:
-                    formatted_cols.append(f'\n\t{str_val(name)}.{col}')
-        else:
-            if table_alias is not None:
-                formatted_cols.append(f'\n\t{table_alias}.*')
-            else:
-                formatted_cols.append(f'\n\t{str_val(name)}.*')
-
-        parsed_names.append(t_name)
-        parsed_titles.append(t_title)
-
-    # add "" (quotation marks) to 2 word based title names
-    for i, title in enumerate(parsed_titles):
-        group = title.split(' ')
-        if len(group) > 2:
-
-            for g in group[:-2]:
-                title = f'"{g} '
-            title += f'{group[-2]}" '
-
-            title += group[-1]
-            parsed_titles[i] = title
-
-    # start of query creation here:
+def get_join_multi_table_sql(tables_data, formatted_cols, distinct):
     sql = f'SELECT {distinct}'
-
     sql += ','.join(formatted_cols)
-    for i, t in enumerate(tables):
+    for i, t in enumerate(tables_data):
         val = i if i == 0 else i - 1
 
         if i == 0:
-            sql += f'\nFROM {parsed_titles[0]}\n'
+            sql += f'\nFROM {tables_data[0].get("title")}\n'
             continue
 
-        # TODO: need to treat issue with the parsed_name vs alias for table names, otherwise -> ambiguous column name: c.CompanyName
-
-        sql += f'{format_join_type(j_type)} JOIN {parsed_titles[i]} ON {parsed_names[val]}.{t["shared"]} = {parsed_names[i]}.{t["shared"]}\n'
+        sql += f"{format_join_type(t.get('join'))} JOIN {tables_data[i].get('title')} ON {tables_data[val].get('alias') if 'alias' in tables_data[val] else tables_data[val]['title']}.{t['shared']} = {t.get('alias') if 'alias' in t else t['title']}.{t['shared']}\n"
 
     return sql
 
