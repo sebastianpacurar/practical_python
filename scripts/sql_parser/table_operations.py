@@ -66,7 +66,7 @@ def get_like_sql(c, sw, ew):
     return sql
 
 
-# covers JOIN clause
+# covers JOIN clause for more than 3 tables
 def get_join_multi_table_sql(tables_data, formatted_cols, distinct):
     sql = f'SELECT {distinct}'
     sql += ','.join(formatted_cols)
@@ -79,6 +79,20 @@ def get_join_multi_table_sql(tables_data, formatted_cols, distinct):
 
         sql += f"{format_join_type(t.get('join'))} JOIN {tables_data[i].get('title')} ON {tables_data[val].get('alias') if 'alias' in tables_data[val] else tables_data[val]['title']}.{t['shared']} = {t.get('alias') if 'alias' in t else t['title']}.{t['shared']}\n"
 
+    return sql
+
+
+# covers JOIN clause for 2 tables only
+def get_join_two_table_sql(table_left, table_right, distinct, join, shared_col):
+    l_table, l_cols = process_two_table_join(table_left)
+    r_table, r_cols = process_two_table_join(table_right)
+    cols = l_cols + r_cols
+    sql = f'SELECT {distinct}'
+    sql += ','.join(cols)
+
+    sql += f'\nFROM {l_table.get("title")}\n'
+    sql += f'{format_join_type(join)} JOIN {r_table.get("title")}\n'
+    sql += f'ON {l_table.get("name")}.{shared_col} = {r_table.get("name")}.{shared_col}\n'
     return sql
 
 

@@ -2,9 +2,9 @@ from enum import Enum
 
 
 class FilterCondition(Enum):
-    CONTAINS = 'LIKE "%{}%"'
-    STARTS_WITH = 'LIKE "{}%"'
-    ENDS_WITH = 'LIKE "%{}"'
+    CONTAINS = "LIKE '%{}%'"
+    STARTS_WITH = "LIKE '{}%'"
+    ENDS_WITH = "LIKE '%{}'"
 
 
 class AggregateFunctions(Enum):

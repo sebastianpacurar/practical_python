@@ -1,10 +1,11 @@
 import io
 import sqlite3
-from typing import Optional, List, Tuple, Union, Dict
+from typing import Tuple, Union
 import pandas as pd
 from matplotlib import pyplot as plt
 from PIL import Image
 
+from scripts.sql_parser.constants import INNER, LEFT
 from scripts.sql_parser.table_operations import *
 from utils import *
 
@@ -70,7 +71,37 @@ class SqlParser:
 
         return res
 
-    # TODO: add join on 2 tables back, for simplicity
+    # join 2 tables only
+    def join(
+            self,
+            table_left: Tuple[str, List[str]],
+            table_right: Union[str, Tuple[str, List[str]]],
+            shared_col: str,
+            join: Optional[str] = 'i',
+            contains: Optional[Tuple[str, Union[str, int, float]]] = None,
+            starts_with: Optional[Tuple[str, Union[str, int, float]]] = None,
+            ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
+            distinct: Optional[bool] = False,
+            where: Optional[List[str]] = None,
+            order_by: Optional[Tuple[str, int]] = None,
+            offset: Optional[int] = 0,
+            limit: Optional[int] = 0,
+            subq: Optional[bool] = False
+    ) -> Union[pd.DataFrame, str]:
+        distinct = get_distinct_sql(distinct)
+
+        query = get_join_two_table_sql(table_left, table_right, distinct, join, shared_col)
+        query += get_like_sql(contains, starts_with, ends_with)
+        query += get_where_sql(query, where)
+        query += get_order_by_sql(order_by)
+        query += get_limit_sql(limit, offset, order_by)
+
+        res = query if subq is True else self.exec_query(query)
+        print(f'\n{query}\n')
+
+        return res
+
+    # join more than 2 tables
     def multi_join(
             self,
             tables: List[Dict[str, Union[str, List[str]]]],
@@ -80,6 +111,7 @@ class SqlParser:
             distinct: Optional[bool] = False,
             where: Optional[List[str]] = None,
             order_by: Optional[Tuple[str, int]] = None,
+            offset: Optional[int] = 0,
             limit: Optional[int] = 0,
             subq: Optional[bool] = False
     ) -> Union[pd.DataFrame, str]:
@@ -92,7 +124,7 @@ class SqlParser:
         query += get_like_sql(contains, starts_with, ends_with)
         query += get_where_sql(query, where)
         query += get_order_by_sql(order_by)
-        query += get_limit_sql(limit, None, None)
+        query += get_limit_sql(limit, offset, order_by)
 
         res = query if subq is True else self.exec_query(query)
         print(f'\n{query}\n')
@@ -154,6 +186,14 @@ if __name__ == '__main__':
     nc, sc, cc = SqlParser(NC_PATH), SqlParser(SC_PATH), SqlParser(CC_PATH)
     nct, sct, cct = nc.table, sc.table, cc.table
 
+    print(nc.join(table_left=('Customers', ['CompanyName', 'Phone', 'Fax']),
+                  table_right=('Orders:o', ['ShipRegion', 'ShipCountry']),
+                  shared_col='CustomerID',
+                  starts_with=('Phone', '3'),
+                  order_by=('ShipRegion', 1),
+                  distinct=True,
+                  join=INNER))
+
     print(nct(name='Order Details',
               cols=['UnitPrice'], distinct=True,
               where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
@@ -175,11 +215,11 @@ if __name__ == '__main__':
     orders_table = get_table(name='Orders:O',
                              shared='CustomerID',
                              cols=['ShipRegion', 'ShipCountry'],
-                             join='i')
+                             join=INNER)
     order_details_table = get_table(name='Order Details:OD',
                                     shared='OrderId',
                                     cols=['ProductId', 'Quantity', 'UnitPrice'],
-                                    join='l')
+                                    join=LEFT)
 
     print(nc.multi_join(tables=([customers_table, orders_table, order_details_table]),
                         starts_with=('Phone', '3'),

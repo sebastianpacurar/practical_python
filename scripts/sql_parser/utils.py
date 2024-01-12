@@ -101,6 +101,28 @@ def process_multi_table_join(tables):
     return tables_data, formatted_cols
 
 
+def process_two_table_join(table_format):
+    # if is_group, then query contains named columns to display
+    is_group = isinstance(table_format, tuple)
+    full_name = table_format[0] if is_group else table_format
+    t_title = full_name
+    formatted_cols = []
+    alias = None
+
+    # perform naming operations and set alias
+    if ':' in full_name:
+        t_title = full_name.replace(':', ' ')
+        t_name, alias = full_name.split(':')
+
+    t_name = alias if alias is not None else full_name
+    for item in table_format[1]:
+        formatted_cols.append(f'\n\t{alias if alias is not None else full_name}.{item if is_group else "*"}')
+
+    tables_data = {'name': t_name, 'title': t_title}
+
+    return tables_data, formatted_cols
+
+
 def format_join_type(join_type):
     joins = {
         'i': 'INNER',
