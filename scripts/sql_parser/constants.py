@@ -10,3 +10,10 @@ LEFT = 'l'
 RIGHT = 'r'
 FULL = 'f'
 CROSS = 'c'
+
+# # cast related
+# INTEGER = 'INTEGER'
+# REAL = 'REAL'
+# TEXT = 'TEXT'
+# DATE = 'DATE'
+# TIME = 'TIME'

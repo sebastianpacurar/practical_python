@@ -49,7 +49,7 @@ def get_where_sql(query, where_param):
                 is_between_agg, agg_vals = get_between_agg(cond[1:])
                 if is_between_agg:
                     low, col, high = agg_vals
-                    sql += f'{start} {AggregateFunctions.BETWEEN.value.format(col, low, high)}\n'
+                    sql += f'{start} {SqlFunctions.BETWEEN.value.format(col, low, high)}\n'
                 else:
                     sql += f'{start} {cond[1:]}\n'
     return sql

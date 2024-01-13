@@ -1,7 +1,7 @@
 import re
 from typing import Optional, Dict, List
 
-from enums import AggregateFunctions
+from enums import SqlFunctions
 
 
 def get_int_or_zero(x):
@@ -15,8 +15,11 @@ def get_list_or_zero(x):
     return x if isinstance(x, list) and len(x) > 0 else 0
 
 
-def str_val(x):
-    return x if x.isalpha() else f'"{x}"'
+def str_val(*args):
+    if len(args) == 1:
+        return args[0] if args[0].isalpha() else f'"{args[0]}"'
+    else:
+        return tuple(x if x.isalpha() else f'"{x}"' for x in args)
 
 
 def and_or_operator(x):
@@ -34,23 +37,23 @@ def format_cols_query(cols):
     for col in cols:
         if '=' in col and ':' in col:
             agg, col_name, col_alias = re.split(r'[:=]', col)
-            col_name = str_val(col_name)
-            agg_func = AggregateFunctions[agg.upper()].value.format(col_name)
-            form_cols.append(f'{agg_func} AS "{col_alias}"')
+            col_name, col_alias = str_val(col_name, col_alias)
+            agg_func = SqlFunctions[agg.upper()].value.format(col_name)
+            form_cols.append(f'{agg_func} AS {col_alias}')
         elif '=' in col:
             agg, col_name = col.split('=')
             col_name = str_val(col_name)
-            agg_func = AggregateFunctions[agg.upper()].value.format(col_name)
+            agg_func = SqlFunctions[agg.upper()].value.format(col_name)
             form_cols.append(f'{agg_func}')
         elif ':' in col:
-            col_name, col_alias = col.split(':')
-            col_name = str_val(col_name)
-            form_cols.append(f'{col_name} AS "{col_alias}"')
+            split = col.split(':')
+            col_name, col_alias = split[0], str_val(split[1].strip())
+            form_cols.append(f'{col_name} AS {col_alias}')
         else:
             col = str_val(col)
             form_cols.append(f'{col}')
 
-    return ',\n\t'.join(form_cols)
+    return form_cols
 
 
 # parse tables in dictionaries, in a list. parse all displayed columns in a single list
@@ -74,7 +77,7 @@ def process_multi_table_join(tables):
         # format the target columns (these are the ones between SELECT and FROM
         #  use table alias where necessary
         if 'cols' in t:
-            cols = map(lambda x: str_val(x), t['cols'])
+            cols = format_cols_query(t['cols'])
             for col in cols:
                 formatted_cols.append(f'\n\t{table_alias if table_alias is not None else name}.{col}')
         else:
@@ -107,16 +110,17 @@ def process_two_table_join(table_format):
     full_name = table_format[0] if is_group else table_format
     t_title = full_name
     formatted_cols = []
-    alias = None
+    t_alias = None
 
-    # perform naming operations and set alias
+    # perform naming operations and set table alias
     if ':' in full_name:
         t_title = full_name.replace(':', ' ')
-        t_name, alias = full_name.split(':')
+        t_name, t_alias = full_name.split(':')
 
-    t_name = alias if alias is not None else full_name
-    for item in table_format[1]:
-        formatted_cols.append(f'\n\t{alias if alias is not None else full_name}.{item if is_group else "*"}')
+    t_name = t_alias if t_alias is not None else full_name
+    cols = format_cols_query(table_format[1])
+    for item in cols:
+        formatted_cols.append(f'\n\t{t_alias if t_alias is not None else full_name}.{item if is_group else "*"}')
 
     tables_data = {'name': t_name, 'title': t_title}
 

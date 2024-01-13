@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from PIL import Image
 
-from scripts.sql_parser.constants import INNER, LEFT
+from scripts.sql_parser.constants import *
 from scripts.sql_parser.table_operations import *
 from utils import *
 
@@ -54,7 +54,9 @@ class SqlParser:
         if cols is not None and '*' not in cols:
             t_cols = format_cols_query(cols)
 
-        query = f'SELECT {distinct}{t_cols}\nFROM {name} \n'
+        t_cols = ',\n\t'.join(t_cols)
+
+        query = f'SELECT {distinct}\n\t{t_cols}\nFROM {name} \n'
 
         query += get_like_sql(contains, starts_with, ends_with)
         query += get_where_sql(query, where)
@@ -186,8 +188,8 @@ if __name__ == '__main__':
     nc, sc, cc = SqlParser(NC_PATH), SqlParser(SC_PATH), SqlParser(CC_PATH)
     nct, sct, cct = nc.table, sc.table, cc.table
 
-    print(nc.join(table_left=('Customers', ['CompanyName', 'Phone', 'Fax']),
-                  table_right=('Orders:o', ['ShipRegion', 'ShipCountry']),
+    print(nc.join(table_left=('Customers', ['CompanyName:ID', 'Phone:My Phone', 'Fax:My Fax']),
+                  table_right=('Orders:o', ['ShipRegion:Region', 'ShipCountry']),
                   shared_col='CustomerID',
                   starts_with=('Phone', '3'),
                   order_by=('ShipRegion', 1),
@@ -195,7 +197,7 @@ if __name__ == '__main__':
                   join=INNER))
 
     print(nct(name='Order Details',
-              cols=['UnitPrice'], distinct=True,
+              cols=['ProductId:Id', 'UnitPrice'], distinct=True,
               where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
               order_by=('UnitPrice', -1),
               limit=5, offset=2))
@@ -211,7 +213,7 @@ if __name__ == '__main__':
 
     customers_table = get_table(name='Customers:C',
                                 shared='CustomerID',
-                                cols=['CompanyName', 'Phone', 'Fax'])
+                                cols=['CompanyName:MyCompany', 'Phone:                 MyPhone', 'Fax:MyFax'])
     orders_table = get_table(name='Orders:O',
                              shared='CustomerID',
                              cols=['ShipRegion', 'ShipCountry'],
@@ -226,6 +228,13 @@ if __name__ == '__main__':
                         order_by=('ShipRegion', 1),
                         limit=10,
                         distinct=True))
+
+    print(nc.multi_join(
+        tables=([{NAME: 'Customers:C', SHARED: 'CustomerID', COLS: ['CompanyName:Company Name', 'Phone:Land Phone']},
+                 {NAME: 'Orders:O', SHARED: 'CustomerID', COLS: ['ShipCountry'], JOIN: INNER},
+                 {NAME: 'Order Details:OD', SHARED: 'OrderId', COLS: ['ProductId', 'Quantity', 'UnitPrice: Price'],
+                  JOIN: LEFT}]),
+        limit=5))
 
     print(cct(name='Cases', count=True, contains=('geoId', 'FR')))
 
