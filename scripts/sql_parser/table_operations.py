@@ -22,6 +22,20 @@ def get_limit_sql(limit_param, offset_param, order_by_param):
     return sql
 
 
+# covers GROUP BY clause
+# TODO works only with 1 col
+def get_group_by_sql(group_by_param):
+    sql = ''
+    if group_by_param:
+        if get_list_or_zero(group_by_param):
+            sql = f'GROUP BY'
+            for i in group_by_param:
+                sql += f' {i}'
+        else:
+            sql += f'GROUP BY {group_by_param}\n'
+    return sql
+
+
 # covers ORDER BY clause
 # TODO Update to handle table aliasing
 def get_order_by_sql(order_by_param):
@@ -66,7 +80,7 @@ def get_like_sql(c, sw, ew):
     return sql
 
 
-# covers JOIN clause for more than 3 tables
+# covers JOIN clause for more than 2 tables
 def get_join_multi_table_sql(tables_data, formatted_cols, distinct):
     sql = f'SELECT {distinct}'
     sql += ','.join(formatted_cols)
@@ -77,7 +91,12 @@ def get_join_multi_table_sql(tables_data, formatted_cols, distinct):
             sql += f'\nFROM {tables_data[0].get("title")}\n'
             continue
 
-        sql += f"{format_join_type(t.get('join'))} JOIN {tables_data[i].get('title')} ON {tables_data[val].get('alias') if 'alias' in tables_data[val] else tables_data[val]['title']}.{t['shared']} = {t.get('alias') if 'alias' in t else t['title']}.{t['shared']}\n"
+        curr = tables_data[i]
+        prev = tables_data[val]
+        is_curr_alias = 'alias' in curr
+        is_prev_alias = 'alias' in prev
+
+        sql += f"{format_join_type(t.get('join'))} JOIN {curr.get('title')} ON {prev.get('alias') if is_prev_alias else prev.get('title')}.{prev.get('shared')} = {curr.get('alias') if is_curr_alias else curr.get('title')}.{curr.get('shared')}\n"
 
     return sql
 

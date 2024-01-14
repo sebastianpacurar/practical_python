@@ -64,63 +64,65 @@ def process_multi_table_join(tables):
     for i, t in enumerate(tables):
         t_data = {}
         name, shared_col = t['name'], str_val(t['shared'])
-        t_title = name
-        t_name = name
-        table_alias = None
+        t_alias = None
 
         #  split table name into name and alias, if ':' is present
         if ':' in name:
             t_title = name.replace(':', ' ')
             elements = name.split(':')
-            t_name, table_alias = str_val(elements[0]), elements[1]
+            t_name, t_alias = str_val(elements[0]), elements[1]
+            if len(elements[0].split(' ')) > 1:
+                t_title = f'{t_name} {t_alias}'
+        else:
+            t_name = str_val(name)
+            t_title = t_name
 
-        # format the target columns (these are the ones between SELECT and FROM
+        # format the target columns (these are the ones between SELECT and FROM)
         #  use table alias where necessary
         if 'cols' in t:
             cols = format_cols_query(t['cols'])
             for col in cols:
-                formatted_cols.append(f'\n\t{table_alias if table_alias is not None else name}.{col}')
+                displayed_val = t_alias if t_alias else str_val(name)
+                agg_notations = [enum_item.name for enum_item in list(SqlFunctions)[:4]]
+
+                # if any aggregation is done on the column
+                if any(col.startswith(agg) for agg in agg_notations):
+                    # include table name or alias inside the agg function. ex sum(TableName.Quantity)
+                    data = col.replace('(', f'({displayed_val}.')
+                    string = f'\n\t{data}'
+                else:
+                    string = f'\n\t{displayed_val}.{col}'
+
+                formatted_cols.append(string)
         else:
-            formatted_cols.append(f'\n\t{table_alias if table_alias is not None else str_val(name)}.*')
+            formatted_cols.append(f'\n\t{t_alias if t_alias else str_val(name)}.*')
 
         t_data.update({'name': t_name, 'title': t_title, 'shared': shared_col})
-        if table_alias is not None:
-            t_data.update({'alias': table_alias})
+        if t_alias:
+            t_data.update({'alias': t_alias})
         if 'join' in t:
             t_data.update({'join': t.get('join')})
 
         tables_data.append(t_data)
 
-    # add "" (quotation marks) to 2 word based title names
-    for t in tables_data:
-        group = t.get('title').split(' ')
-        if len(group) > 2:
-
-            for g in group[:-2]:
-                t['title'] = f'"{g} '
-            t['title'] += f'{group[-2]}" '
-            t['title'] += group[-1]
-
     return tables_data, formatted_cols
 
 
-def process_two_table_join(table_format):
-    # if is_group, then query contains named columns to display
-    is_group = isinstance(table_format, tuple)
-    full_name = table_format[0] if is_group else table_format
-    t_title = full_name
+def process_two_table_join(table):
+    t_title = table.get('name')
+
     formatted_cols = []
     t_alias = None
 
     # perform naming operations and set table alias
-    if ':' in full_name:
-        t_title = full_name.replace(':', ' ')
-        t_name, t_alias = full_name.split(':')
+    if ':' in t_title:
+        t_name, t_alias = t_title.split(':')
+        t_title = t_title.replace(':', ' ')
 
-    t_name = t_alias if t_alias is not None else full_name
-    cols = format_cols_query(table_format[1])
+    t_name = t_alias if t_alias else t_title
+    cols = format_cols_query(table.get('cols'))
     for item in cols:
-        formatted_cols.append(f'\n\t{t_alias if t_alias is not None else full_name}.{item if is_group else "*"}')
+        formatted_cols.append(f'\n\t{t_alias if t_alias else t_name}.{item if "cols" in table else "*"}')
 
     tables_data = {'name': t_name, 'title': t_title}
 
@@ -169,6 +171,6 @@ def get_table(
         join: Optional[str] = None
 ) -> Dict[str, str]:
     res = {'name': name, 'shared': shared, 'cols': cols}
-    if join is not None:
+    if join:
         res.update({'join': join})
     return res

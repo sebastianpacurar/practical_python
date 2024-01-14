@@ -38,8 +38,8 @@ class SqlParser:
             starts_with: Optional[Tuple[str, Union[str, int, float]]] = None,
             ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
             distinct: Optional[bool] = False,
-            count: Optional[bool] = False,
             where: Optional[List[str]] = None,
+            group_by: Optional[Union[str, List[str]]] = None,
             order_by: Optional[Tuple[str, int]] = None,
             limit: Optional[int] = 0,
             offset: Optional[int] = 0,
@@ -47,11 +47,10 @@ class SqlParser:
     ) -> Union[pd.DataFrame, str]:
         name = str_val(name)
         distinct = get_distinct_sql(distinct)
-        count = 'COUNT(*) AS items_count' if count else ''  # TODO: change or remove!
         t_cols = '*'
 
         # handle cols=[] kwarg
-        if cols is not None and '*' not in cols:
+        if cols and '*' not in cols:
             t_cols = format_cols_query(cols)
 
         t_cols = ',\n\t'.join(t_cols)
@@ -60,12 +59,9 @@ class SqlParser:
 
         query += get_like_sql(contains, starts_with, ends_with)
         query += get_where_sql(query, where)
+        query += get_group_by_sql(group_by)
         query += get_order_by_sql(order_by)
         query += get_limit_sql(limit, offset, order_by)
-
-        # handle count kwarg
-        if count:
-            query = f'SELECT {count} FROM ({query})'
 
         # return the query string if subq=True
         res = query if subq is True else self.exec_query(query)
@@ -76,8 +72,8 @@ class SqlParser:
     # join 2 tables only
     def join(
             self,
-            table_left: Tuple[str, List[str]],
-            table_right: Union[str, Tuple[str, List[str]]],
+            table_left: Dict[str, Union[str, List[str]]],
+            table_right: Dict[str, Union[str, List[str]]],
             shared_col: str,
             join: Optional[str] = 'i',
             contains: Optional[Tuple[str, Union[str, int, float]]] = None,
@@ -85,9 +81,11 @@ class SqlParser:
             ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
             distinct: Optional[bool] = False,
             where: Optional[List[str]] = None,
+            group_by: Optional[str] = None,
             order_by: Optional[Tuple[str, int]] = None,
             offset: Optional[int] = 0,
             limit: Optional[int] = 0,
+
             subq: Optional[bool] = False
     ) -> Union[pd.DataFrame, str]:
         distinct = get_distinct_sql(distinct)
@@ -95,6 +93,7 @@ class SqlParser:
         query = get_join_two_table_sql(table_left, table_right, distinct, join, shared_col)
         query += get_like_sql(contains, starts_with, ends_with)
         query += get_where_sql(query, where)
+        query += get_group_by_sql(group_by)
         query += get_order_by_sql(order_by)
         query += get_limit_sql(limit, offset, order_by)
 
@@ -112,6 +111,7 @@ class SqlParser:
             ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
             distinct: Optional[bool] = False,
             where: Optional[List[str]] = None,
+            group_by: Optional[str] = None,
             order_by: Optional[Tuple[str, int]] = None,
             offset: Optional[int] = 0,
             limit: Optional[int] = 0,
@@ -125,6 +125,7 @@ class SqlParser:
         query = get_join_multi_table_sql(tables_data, formatted_cols, distinct)
         query += get_like_sql(contains, starts_with, ends_with)
         query += get_where_sql(query, where)
+        query += get_group_by_sql(group_by)
         query += get_order_by_sql(order_by)
         query += get_limit_sql(limit, offset, order_by)
 
@@ -162,7 +163,7 @@ class SqlParser:
                 category_name = row.CategoryName
                 image_data = row.Picture
 
-                if image_data is not None:
+                if image_data:
                     image = Image.open(io.BytesIO(image_data))
                     ax = axes[idx // num_cols, idx % num_cols]
                     ax.imshow(image)
@@ -188,8 +189,8 @@ if __name__ == '__main__':
     nc, sc, cc = SqlParser(NC_PATH), SqlParser(SC_PATH), SqlParser(CC_PATH)
     nct, sct, cct = nc.table, sc.table, cc.table
 
-    print(nc.join(table_left=('Customers', ['CompanyName:ID', 'Phone:My Phone', 'Fax:My Fax']),
-                  table_right=('Orders:o', ['ShipRegion:Region', 'ShipCountry']),
+    print(nc.join(table_left={NAME: 'Customers', COLS: ['CompanyName:ID', 'Phone:My Phone', 'Fax:My Fax']},
+                  table_right={NAME: 'Orders:o', COLS: ['ShipRegion:Region', 'ShipCountry']},
                   shared_col='CustomerID',
                   starts_with=('Phone', '3'),
                   order_by=('ShipRegion', 1),
@@ -232,10 +233,13 @@ if __name__ == '__main__':
     print(nc.multi_join(
         tables=([{NAME: 'Customers:C', SHARED: 'CustomerID', COLS: ['CompanyName:Company Name', 'Phone:Land Phone']},
                  {NAME: 'Orders:O', SHARED: 'CustomerID', COLS: ['ShipCountry'], JOIN: INNER},
-                 {NAME: 'Order Details:OD', SHARED: 'OrderId', COLS: ['ProductId', 'Quantity', 'UnitPrice: Price'],
+                 {NAME: 'Order Details', SHARED: 'OrderId', COLS: ['ProductId', 'Quantity', 'UnitPrice: Price'],
                   JOIN: LEFT}]),
         limit=5))
 
-    print(cct(name='Cases', count=True, contains=('geoId', 'FR')))
+    print(nct(name='Orders',
+              cols=['ShipCountry', 'count=*:OrderCount'],
+              group_by='ShipCountry',
+              order_by=('OrderCount', -1)))
 
     nc.categories_img(num_cols=3)
