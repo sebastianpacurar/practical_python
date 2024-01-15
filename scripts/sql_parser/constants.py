@@ -3,6 +3,8 @@ NAME = 'name'
 SHARED = 'shared'
 COLS = 'cols'
 JOIN = 'join'
+AGG_FUNC = 'agg_func'
+COLS_OP = 'cols_operation'
 
 # join related
 INNER = 'i'

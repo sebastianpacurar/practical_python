@@ -7,6 +7,13 @@ class FilterCondition(Enum):
     ENDS_WITH = "LIKE '%{}'"
 
 
+# aggregations between 2 columns. ex: SUM(Products.Price * OrderDetails.Quantity)
+class ColsAggregations(Enum):
+    SUM = 'SUM({} {} {})'
+    AVG = 'AVG({} {} {})'
+
+
+# sql functions, typically on a column (subquery)
 class SqlFunctions(Enum):
     AVG = 'AVG({})'
     SUM = 'SUM({})'

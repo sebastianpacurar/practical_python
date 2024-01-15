@@ -1,7 +1,7 @@
 import re
 from typing import Optional, Dict, List
 
-from enums import SqlFunctions
+from enums import SqlFunctions, ColsAggregations
 
 
 def get_int_or_zero(x):
@@ -57,13 +57,15 @@ def format_cols_query(cols):
 
 
 # parse tables in dictionaries, in a list. parse all displayed columns in a single list
-def process_multi_table_join(tables):
+def process_multi_table_join(tables, col_agg):
     tables_data = []
     formatted_cols = []
 
     for i, t in enumerate(tables):
         t_data = {}
         name, shared_col = t['name'], str_val(t['shared'])
+
+        # TODO fix here new SharedCol implementation
         t_alias = None
 
         #  split table name into name and alias, if ':' is present
@@ -80,22 +82,23 @@ def process_multi_table_join(tables):
         # format the target columns (these are the ones between SELECT and FROM)
         #  use table alias where necessary
         if 'cols' in t:
-            cols = format_cols_query(t['cols'])
-            for col in cols:
-                displayed_val = t_alias if t_alias else str_val(name)
-                agg_notations = [enum_item.name for enum_item in list(SqlFunctions)[:4]]
+            if get_list_or_zero(t['cols']):
+                cols = format_cols_query(t['cols'])
+                for col in cols:
+                    displayed_val = t_alias if t_alias else str_val(name)
+                    agg_notations = [enum_item.name for enum_item in list(SqlFunctions)[:4]]
 
-                # if any aggregation is done on the column
-                if any(col.startswith(agg) for agg in agg_notations):
-                    # include table name or alias inside the agg function. ex sum(TableName.Quantity)
-                    data = col.replace('(', f'({displayed_val}.')
-                    string = f'\n\t{data}'
-                else:
-                    string = f'\n\t{displayed_val}.{col}'
+                    # if any aggregation is done on the column
+                    if any(col.startswith(agg) for agg in agg_notations):
+                        # include table name or alias inside the agg function. ex sum(TableName.Quantity)
+                        data = col.replace('(', f'({displayed_val}.')
+                        string = f'\n\t{data}'
+                    else:
+                        string = f'\n\t{displayed_val}.{col}'
 
-                formatted_cols.append(string)
-        else:
-            formatted_cols.append(f'\n\t{t_alias if t_alias else str_val(name)}.*')
+                    formatted_cols.append(string)
+            elif t.get('cols') == '*':
+                formatted_cols.append(f'\n\t{t_alias if t_alias else str_val(name)}.*')
 
         t_data.update({'name': t_name, 'title': t_title, 'shared': shared_col})
         if t_alias:
@@ -104,6 +107,39 @@ def process_multi_table_join(tables):
             t_data.update({'join': t.get('join')})
 
         tables_data.append(t_data)
+
+    # Check for col aggregations:
+    if col_agg:
+        agg_func = col_agg.get('agg_func').upper()
+        cols_operation = col_agg.get('cols_operation')
+        col_alias = None
+        tables = []
+
+        # handle column alias if present
+        if ':' in agg_func:
+            agg_func, col_alias = col_agg.get('agg_func').split(':')
+            agg_func = agg_func.upper()
+
+        for i, item in enumerate(col_agg.get('cols')):
+            name, col = str_val(*item.split('.'))
+            tables.append({'name': name, 'col': col})
+
+        # update tables local variable to contain alias key if necessary
+        for t in tables:
+            for td in tables_data:
+                if 'alias' in td:
+                    if t['name'] == td['name']:
+                        t.update({'alias': td['alias']})
+
+        # if alias then use alias of table, else use name of table
+        val_left = f"{tables[0]['alias'] if 'alias' in tables[0] else tables[0]['name']}.{tables[0]['col']}"
+        val_right = f"{tables[1]['alias'] if 'alias' in tables[1] else tables[1]['name']}.{tables[1]['col']}"
+
+        string = f'\n\t{ColsAggregations[agg_func].value.format(val_left, cols_operation, val_right)}'
+        if col_alias:
+            string += f' AS {col_alias}'
+
+        formatted_cols.append(string)
 
     return tables_data, formatted_cols
 

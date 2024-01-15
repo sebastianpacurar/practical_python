@@ -28,9 +28,7 @@ def get_group_by_sql(group_by_param):
     sql = ''
     if group_by_param:
         if get_list_or_zero(group_by_param):
-            sql = f'GROUP BY'
-            for i in group_by_param:
-                sql += f' {i}'
+            sql += f'Group By {", ".join(group_by_param)}'
         else:
             sql += f'GROUP BY {group_by_param}\n'
     return sql
