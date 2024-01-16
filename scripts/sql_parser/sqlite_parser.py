@@ -126,7 +126,7 @@ class SqlParser:
         query = get_join_multi_table_sql(tables_data, formatted_cols, distinct)
         query += get_like_sql(contains, starts_with, ends_with)
         query += get_where_sql(query, where)
-        query += get_group_by_sql(group_by)
+        query += get_group_by_sql(group_by, tables_data)
         query += get_order_by_sql(order_by)
         query += get_limit_sql(limit, offset, order_by)
 
@@ -190,29 +190,29 @@ if __name__ == '__main__':
     nc, sc, cc = SqlParser(NC_PATH), SqlParser(SC_PATH), SqlParser(CC_PATH)
     nct, sct, cct = nc.table, sc.table, cc.table
 
-    # print(nc.join(table_left={NAME: 'Customers', COLS: ['CompanyName:ID', 'Phone:My Phone', 'Fax:My Fax']},
-    #               table_right={NAME: 'Orders:o', COLS: ['ShipRegion:Region', 'ShipCountry']},
-    #               shared_col='CustomerID',
-    #               starts_with=('Phone', '3'),
-    #               order_by=('ShipRegion', 1),
-    #               distinct=True,
-    #               join=INNER))
-    #
-    # print(nct(name='Order Details',
-    #           cols=['ProductId:Id', 'UnitPrice'], distinct=True,
-    #           where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
-    #           order_by=('UnitPrice', -1),
-    #           limit=5, offset=2))
-    #
-    # print(nct(name='Order Details', cols=['UnitPrice'], distinct=True, where=['&20.0 >= UnitPrice <= 70.0'],
-    #           order_by=('UnitPrice', -1), limit=5, offset=2))
-    #
-    # print(nct(name='Order Details',
-    #           cols=['avg=UnitPrice:UP Avg',
-    #                 'max=UnitPrice:UP Max',
-    #                 'min=UnitPrice:UP Min',
-    #                 'count=UnitPrice:UP Count']))
-    #
+    print(nc.join(table_left={NAME: 'Customers', COLS: ['CompanyName:ID', 'Phone:My Phone', 'Fax:My Fax']},
+                  table_right={NAME: 'Orders:o', COLS: ['ShipRegion:Region', 'ShipCountry']},
+                  shared_col='CustomerID',
+                  starts_with=('Phone', '3'),
+                  order_by=('ShipRegion', 1),
+                  distinct=True,
+                  join=INNER))
+
+    print(nct(name='Order Details',
+              cols=['ProductId:Id', 'UnitPrice'], distinct=True,
+              where=['&20.0 >= UnitPrice <= 70.0', '|UnitPrice > 20'],
+              order_by=('UnitPrice', -1),
+              limit=5, offset=2))
+
+    print(nct(name='Order Details', cols=['UnitPrice'], distinct=True, where=['&20.0 >= UnitPrice <= 70.0'],
+              order_by=('UnitPrice', -1), limit=5, offset=2))
+
+    print(nct(name='Order Details',
+              cols=['avg=UnitPrice:UP Avg',
+                    'max=UnitPrice:UP Max',
+                    'min=UnitPrice:UP Min',
+                    'count=UnitPrice:UP Count']))
+
     # customers_table = get_table(name='Customers:C',
     #                             shared='CustomerID',
     #                             cols=['CompanyName:MyCompany', 'Phone:                 MyPhone', 'Fax:MyFax'])
@@ -230,31 +230,38 @@ if __name__ == '__main__':
     #                     order_by=('ShipRegion', 1),
     #                     limit=10,
     #                     distinct=True))
-    #
-    # print(nc.multi_join(
-    #     tables=([{NAME: 'Customers:C', SHARED: 'CustomerID', COLS: ['CompanyName:Company Name', 'Phone:Land Phone']},
-    #              {NAME: 'Orders:O', SHARED: 'CustomerID', COLS: ['ShipCountry'], JOIN: INNER},
-    #              {NAME: 'Order Details', SHARED: 'OrderId', COLS: ['ProductId', 'Quantity', 'UnitPrice: Price'],
-    #               JOIN: LEFT}]),
-    #     limit=5))
-    #
-    # print(nct(name='Orders',
-    #           cols=['ShipCountry', 'count=*:OrderCount'],
-    #           group_by='ShipCountry',
-    #           order_by=('OrderCount', -1)))
 
+    print(nct(name='Orders',
+              cols=['ShipCountry', 'count=*:OrderCount'],
+              group_by='ShipCountry',
+              order_by=('OrderCount', -1)))
+
+    # total sales amount for each category and supplier
     print(nc.multi_join(
-        tables=[{NAME: 'Categories', COLS: ['CategoryName']},
-                {NAME: 'Products', SHARED: 'Categories.CategoryId = Products.CategoryId', JOIN: INNER},
-                {NAME: 'Suppliers', SHARED: 'Products.SupplierID = Suppliers.SupplierID', COLS: ['CompanyName'],
+        tables=[{NAME: 'Categories:C', COLS: ['CategoryName']},
+                {NAME: 'Products:P', SHARED: 'Categories.CategoryId = Products.CategoryId', JOIN: INNER},
+                {NAME: 'Suppliers:S', SHARED: 'Products.SupplierID = Suppliers.SupplierID', COLS: ['CompanyName'],
                  JOIN: INNER},
-                {NAME: 'Order Details', SHARED: 'Products.ProductID = OrderDetails.ProductID', COLS: [], JOIN: INNER}],
+                {NAME: 'Order Details:OD', SHARED: 'Products.ProductID = Order Details.ProductID', COLS: [],
+                 JOIN: INNER}],
 
         col_agg={AGG_FUNC: 'sum:TotalSales',
                  COLS: ['Products.UnitPrice', 'Order Details.Quantity'],
                  COLS_OP: '*'},
 
         group_by=['Categories.CategoryName', 'Suppliers.CompanyName']
+    ))
+
+    # Average Order Amount by Employee
+    print(nc.multi_join(
+        tables=[{NAME: 'Employees', COLS: ['LastName']},
+                {NAME: 'Orders', COLS: [], SHARED: 'Employees.EmployeeID = Orders.EmployeeID', JOIN: LEFT},
+                {NAME: 'Order Details', COLS: [], SHARED: 'Orders.OrderID = Order Details.OrderID', JOIN: LEFT}],
+        col_agg={AGG_FUNC: 'avg:AvgOrderAmount',
+                 COLS: ['Order Details.UnitPrice', 'Order Details.Quantity'],
+                 COLS_OP: '*'},
+        group_by=['Employees.LastName'],
+        order_by=('AvgOrderAmount', -1)
     ))
 
     # nc.categories_img(num_cols=3)

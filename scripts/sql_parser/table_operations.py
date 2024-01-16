@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 
 from scripts.sql_parser.enums import FilterCondition
 from scripts.sql_parser.utils import *
@@ -23,12 +23,28 @@ def get_limit_sql(limit_param, offset_param, order_by_param):
 
 
 # covers GROUP BY clause
-# TODO works only with 1 col
-def get_group_by_sql(group_by_param):
+def get_group_by_sql(
+        group_by_param: Optional[Union[List[str], str]] = None,
+        tables_data: Optional[List[Dict[str, str]]] = None
+) -> str:
     sql = ''
     if group_by_param:
         if get_list_or_zero(group_by_param):
-            sql += f'Group By {", ".join(group_by_param)}'
+            formatted = []
+            for item in group_by_param:
+                table, col = str_val(*item.split('.'))
+
+                # TODO: duplicate!!
+                for td in tables_data:
+                    if 'alias' in td and td['name'] == table:
+                        table = td['alias']
+                        break
+
+                formatted.append(f'{table}.{col}')
+
+            res = ', '.join(formatted)
+
+            sql += f'Group By {res}\n'
         else:
             sql += f'GROUP BY {group_by_param}\n'
     return sql
@@ -82,19 +98,10 @@ def get_like_sql(c, sw, ew):
 def get_join_multi_table_sql(tables_data, formatted_cols, distinct):
     sql = f'SELECT {distinct}'
     sql += ','.join(formatted_cols)
-    for i, t in enumerate(tables_data):
-        val = i if i == 0 else i - 1
+    sql += f'\nFROM {tables_data[0].get("title")}\n'
 
-        if i == 0:
-            sql += f'\nFROM {tables_data[0].get("title")}\n'
-            continue
-
-        curr = tables_data[i]
-        prev = tables_data[val]
-        is_curr_alias = 'alias' in curr
-        is_prev_alias = 'alias' in prev
-
-        sql += f"{format_join_type(t.get('join'))} JOIN {curr.get('title')} ON {prev.get('alias') if is_prev_alias else prev.get('title')}.{prev.get('shared')} = {curr.get('alias') if is_curr_alias else curr.get('title')}.{curr.get('shared')}\n"
+    for t in tables_data[1:]:
+        sql += f"{format_join_type(t.get('join'))} JOIN {t.get('title')} ON {t.get('shared')}\n"
 
     return sql
 
