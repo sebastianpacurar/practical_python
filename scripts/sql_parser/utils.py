@@ -109,16 +109,10 @@ def process_multi_table_join(tables, col_agg):
     for t, td in zip(tables, tables_data):
         if 'shared' in t:
             pair = [part.strip() for part in t['shared'].split('=')]
-            data = [
-                str_val(pair[0].split('.')[0]),
-                str_val(pair[0].split('.')[1]),
-                str_val(pair[1].split('.')[0]),
-                str_val(pair[1].split('.')[1]),
-            ]
-            td['shared'] = data
+            # example: [table_left, col_left, table_right, col_right]
+            td['shared'] = [str_val(item) for split in (part.split('.') for part in pair) for item in split]
 
     # format join condition string
-    # TODO: duplicate!!
     for td in tables_data:
         if 'shared' in td:
             shared_data = td['shared']
@@ -149,13 +143,9 @@ def process_multi_table_join(tables, col_agg):
             name, col = str_val(*item.split('.'))
             tables.append({'name': name, 'col': col})
 
-        # update tables['name'] to alias if it's the case
-        for t in tables:
-            for td in tables_data:
-                if 'shared' in td and td['name'] == t['name']:
-                    if 'alias' in td:
-                        t['name'] = td['alias']
-                    break
+        # update tables['name'] to equal either tables_data['alias'] if present, else tables_data['name']
+        [t.update({'name': td.get('alias', td['name'])}) for t in tables for td in tables_data if
+         'shared' in td and td['name'] == t['name']]
 
         # if alias then use alias of table, else use name of table
         val_left = f"{tables[0]['alias'] if 'alias' in tables[0] else tables[0]['name']}.{tables[0]['col']}"

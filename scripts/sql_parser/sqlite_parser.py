@@ -254,9 +254,9 @@ if __name__ == '__main__':
 
     # Average Order Amount by Employee
     print(nc.multi_join(
-        tables=[{NAME: 'Employees', COLS: ['LastName']},
-                {NAME: 'Orders', COLS: [], SHARED: 'Employees.EmployeeID = Orders.EmployeeID', JOIN: LEFT},
-                {NAME: 'Order Details', COLS: [], SHARED: 'Orders.OrderID = Order Details.OrderID', JOIN: LEFT}],
+        tables=[{NAME: 'Employees:E', COLS: ['LastName']},
+                {NAME: 'Orders:O', COLS: [], SHARED: 'Employees.EmployeeID = Orders.EmployeeID', JOIN: LEFT},
+                {NAME: 'Order Details:OD', COLS: [], SHARED: 'Orders.OrderID = Order Details.OrderID', JOIN: LEFT}],
         col_agg={AGG_FUNC: 'avg:AvgOrderAmount',
                  COLS: ['Order Details.UnitPrice', 'Order Details.Quantity'],
                  COLS_OP: '*'},

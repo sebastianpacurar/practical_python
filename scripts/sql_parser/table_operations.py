@@ -24,7 +24,7 @@ def get_limit_sql(limit_param, offset_param, order_by_param):
 
 # covers GROUP BY clause
 def get_group_by_sql(
-        group_by_param: Optional[Union[List[str], str]] = None,
+        group_by_param: Union[List[str], str],
         tables_data: Optional[List[Dict[str, str]]] = None
 ) -> str:
     sql = ''
@@ -34,29 +34,38 @@ def get_group_by_sql(
             for item in group_by_param:
                 table, col = str_val(*item.split('.'))
 
-                # TODO: duplicate!!
+                # set name to alias if present, else keep name
                 for td in tables_data:
                     if 'alias' in td and td['name'] == table:
                         table = td['alias']
                         break
 
                 formatted.append(f'{table}.{col}')
-
-            res = ', '.join(formatted)
-
-            sql += f'Group By {res}\n'
+            sql += f'Group By {", ".join(formatted)}\n'
         else:
             sql += f'GROUP BY {group_by_param}\n'
     return sql
 
 
 # covers ORDER BY clause
-# TODO Update to handle table aliasing
-def get_order_by_sql(order_by_param):
+def get_order_by_sql(
+        order_by_param: str,
+        tables_data: Optional[List[Dict[str, str]]] = None
+) -> str:
     sql = ''
     if order_by_param:
-        col, direction = order_by_param
-        sql = f'ORDER BY {col} {"ASC" if int(direction) >= 0 else "DESC"}\n'
+        pair, direction = order_by_param
+        if '.' in pair:
+            pair = pair.split('')
+            # set name to alias if present, else keep name
+            for td in tables_data:
+                if 'alias' in td and td['name'] == pair[0]:
+                    pair[0] = td['alias']
+                    break
+
+            pair = '.'.join(pair)
+
+        sql = f'ORDER BY {pair} {"ASC" if int(direction) >= 0 else "DESC"}\n'
     return sql
 
 
@@ -89,6 +98,7 @@ def get_like_sql(c, sw, ew):
     if c or sw or ew:
         cond = 'contains' if c else 'starts_with' if sw else 'ends_with'
         col, col_val = c if c else sw if sw else ew
+
         formatted_like = FilterCondition[cond.upper()].value.format(col_val)
         sql = f'WHERE {col} {formatted_like}\n'
     return sql
