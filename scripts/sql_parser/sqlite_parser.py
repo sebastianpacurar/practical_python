@@ -213,23 +213,23 @@ if __name__ == '__main__':
                     'min=UnitPrice:UP Min',
                     'count=UnitPrice:UP Count']))
 
-    # customers_table = get_table(name='Customers:C',
-    #                             shared='CustomerID',
-    #                             cols=['CompanyName:MyCompany', 'Phone:                 MyPhone', 'Fax:MyFax'])
-    # orders_table = get_table(name='Orders:O',
-    #                          shared='CustomerID',
-    #                          cols=['ShipRegion', 'ShipCountry'],
-    #                          join=INNER)
-    # order_details_table = get_table(name='Order Details:OD',
-    #                                 shared='OrderId',
-    #                                 cols=['ProductId', 'Quantity', 'UnitPrice'],
-    #                                 join=LEFT)
-    #
-    # print(nc.multi_join(tables=([customers_table, orders_table, order_details_table]),
-    #                     starts_with=('Phone', '3'),
-    #                     order_by=('ShipRegion', 1),
-    #                     limit=10,
-    #                     distinct=True))
+    customers_table = get_table(name='Customers:C',
+                                shared='CustomerID',
+                                cols=['CompanyName:MyCompany', 'Phone:                 MyPhone', 'Fax:MyFax'])
+    orders_table = get_table(name='Orders:O',
+                             shared='CustomerID',
+                             cols=['ShipRegion', 'ShipCountry'],
+                             join=INNER)
+    order_details_table = get_table(name='Order Details:OD',
+                                    shared='OrderId',
+                                    cols=['ProductId', 'Quantity', 'UnitPrice'],
+                                    join=LEFT)
+
+    print(nc.multi_join(tables=([customers_table, orders_table, order_details_table]),
+                        starts_with=('Phone', '3'),
+                        order_by=('ShipRegion', 1),
+                        limit=10,
+                        distinct=True))
 
     print(nct(name='Orders',
               cols=['ShipCountry', 'count=*:OrderCount'],
@@ -264,4 +264,3 @@ if __name__ == '__main__':
         order_by=('AvgOrderAmount', -1)
     ))
 
-    # nc.categories_img(num_cols=3)
