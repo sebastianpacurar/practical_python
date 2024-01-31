@@ -2,7 +2,7 @@ import psutil
 import os
 import platform
 import subprocess
-import wmi
+import re
 
 # init sys_info and populate basic platform information
 sys_info = {
@@ -44,7 +44,7 @@ def get_gpu_info():
                 res = subprocess.check_output(
                     ['nvidia-smi', '--query-gpu=temperature.gpu', '--format=csv,noheader,nounits'], text=True)
                 temps = [int(t.strip()) for t in res.splitlines()]
-            except subprocess.CalledProcessError:
+            except (subprocess.CalledProcessError, FileNotFoundError):
                 # NVIDIA-SMI not found or no NVIDIA GPU
                 pass
 
@@ -57,7 +57,7 @@ def get_gpu_info():
                     else:
                         # Handle the case when ADL.exe is not found
                         print("ADL.exe does not exist. please install ADL to use this")
-                except subprocess.CalledProcessError:
+                except (subprocess.CalledProcessError, FileNotFoundError):
                     # ADL not found or no AMD GPU
                     pass
 
@@ -69,7 +69,7 @@ def get_gpu_info():
                         ['nvidia-smi', '--query-gpu=temperature.gpu', '--format=csv,noheader,nounits'],
                         text=True)
                 temps = [int(t.split(':')[1].strip()) for t in result.splitlines() if 'GPU' in t]
-            except subprocess.CalledProcessError:
+            except (subprocess.CalledProcessError, FileNotFoundError):
                 pass
 
             if not temps and platform.system() == 'Darwin':
@@ -77,7 +77,7 @@ def get_gpu_info():
                     # If iStats didn't work, try using smcFanControl (macOS)
                     result = subprocess.check_output(['smcFanControl', '-g', 'tsdi'], text=True)
                     temps = [int(t.split(':')[1].strip()) for t in result.splitlines() if 'GPU' in t]
-                except subprocess.CalledProcessError:
+                except (subprocess.CalledProcessError, FileNotFoundError):
                     pass
 
         return temps
@@ -101,20 +101,35 @@ def get_storage_info():
     # Mac
     if platform.system() == 'Darwin':
         try:
-            info = subprocess.check_output(['diskutil', 'list'], text=True).split('\n')
-            for line in info:
-                if 'APFS Volume' in line:
-                    device = line.split()[2]
-                    size = line.split()[6]
-                    sys_info['Storage'][device] = {
-                        'Size (GB)': size,
-                    }
+            info = subprocess.check_output(['diskutil', 'list'], text=True)
+            # Split by empty lines to separate devices
+            disks = info.strip().split('\n\n')
+            for disk in disks:
+                lines = disk.strip().split('\n')
+                disk_name = lines[0].split(':')[0]
+                parsed_data = []
+
+                # iterate through subtypes
+                for line in lines[2:]:
+                    subtype = {}
+
+                    # replace any single whitespaces to underscores, to merge words together, then split
+                    line = re.sub(r'(?<=\S) (?=\S)', '_', line).split()
+
+                    if len(line) >= 2:
+                        # grab the last 2 elements
+                        subtype['Identifier'] = line[-1]
+                        subtype['Size'] = line[-2]
+                        parsed_data.append(subtype)
+
+                sys_info['Storage'][disk_name] = parsed_data
         except Exception as e:
-            print(f'error fetching storage information: {e}')
+            print(f'Error fetching storage information: {e}')
 
     # Windows
     elif platform.system() == 'Windows':
         try:
+            import wmi
             c = wmi.WMI()
             for disk in c.Win32_DiskDrive():
                 sys_info['Storage'][disk.DeviceID] = {
@@ -196,9 +211,15 @@ def battery_information():
     elif platform.system() == 'Darwin':
         try:
             battery_info = subprocess.check_output(['pmset', '-g', 'batt'], text=True).strip().split('\n')
-            for line in battery_info:
-                bat_key, bat_val = line.strip().split('\t', 1)
-                sys_info['Battery'][bat_key] = bat_val
+            if len(battery_info) >= 2:
+                power_source = battery_info[0].strip()
+                sys_info['Battery']['Power Source'] = power_source
+
+                battery_status = battery_info[1].strip().split(';')
+                if len(battery_status) >= 3:
+                    sys_info['Battery']['Status'] = battery_status[1].strip()
+                    sys_info['Battery']['Charge'] = battery_status[2].strip()
+
         except subprocess.CalledProcessError:
             pass
 
