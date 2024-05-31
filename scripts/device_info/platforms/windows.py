@@ -35,22 +35,22 @@ class Windows(GenericPlatform):
         gpu_temps = get_gpu_temperature()
         if gpu_temps:
             for i, temp in enumerate(gpu_temps, 1):
-                self.sys_info['GPU'][f'GPU {i}'] = {
+                self.set_sys_info_entry_key('GPU', f'GPU {i}', {
                     'Temperature (°C)': temp,
-                }
+                })
         else:
-            self.sys_info['GPU']['No GPU'] = {
+            self.set_sys_info_entry_key('GPU', 'No GPU', {
                 'Temperature (°C)': 'N/A',
-            }
+            })
 
     def get_storage_info(self):
         try:
             c = wmi.WMI()
             for disk in c.Win32_DiskDrive():
-                self.sys_info['Storage'][disk.DeviceID] = {
+                self.set_sys_info_entry_key('Storage', disk.DeviceID, {
                     'Model': disk.Model,
                     'Size (GB)': round(int(disk.Size) / (1024 ** 3), 2),
-                }
+                })
         except Exception as e:
             print(f'error fetching storage information: {e}')
 
@@ -58,8 +58,8 @@ class Windows(GenericPlatform):
         try:
             battery = psutil.sensors_battery()
             if battery:
-                self.sys_info['Battery']['Percentage'] = f'{battery.percent}%'
-                self.sys_info['Battery']['Plugged In'] = 'Yes' if battery.power_plugged else 'No'
+                self.set_sys_info_entry_key('Battery', 'Percentage', f'{battery.percent}%')
+                self.set_sys_info_entry_key('Battery', 'Plugged In', 'Yes' if battery.power_plugged else 'No')
         except ImportError:
             pass
 

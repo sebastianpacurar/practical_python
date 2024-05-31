@@ -21,13 +21,13 @@ class Linux(GenericPlatform):
         gpu_temps = get_gpu_temperature()
         if gpu_temps:
             for i, temp in enumerate(gpu_temps, 1):
-                self.sys_info['GPU'][f'GPU {i}'] = {
+                self.set_sys_info_entry_key('GPU', f'GPU {i}', {
                     'Temperature (°C)': temp,
-                }
+                })
         else:
-            self.sys_info['GPU']['No GPU'] = {
+            self.set_sys_info_entry_key('GPU', 'No GPU', {
                 'Temperature (°C)': 'N/A',
-            }
+            })
 
     def get_storage_info(self):
         try:
@@ -38,10 +38,10 @@ class Linux(GenericPlatform):
                     device = parts[0]
                     size = parts[1]
                     model = ' '.join(parts[2:])
-                    self.sys_info['Storage'][device] = {
+                    self.set_sys_info_entry_key('Storage', device, {
                         'Size (GB)': size,
                         'Model': model,
-                    }
+                    })
         except Exception as e:
             print(f'error fetching storage information: {e}')
 
@@ -52,7 +52,7 @@ class Linux(GenericPlatform):
             battery_info = battery_info.strip().split('\n')
             for line in battery_info:
                 bat_key, bat_val = line.strip().split(': ', 1)
-                self.sys_info['Battery'][bat_key] = bat_val
+                self.set_sys_info_entry_key('Battery', bat_key, bat_val)
         except subprocess.CalledProcessError:
             pass
 

@@ -1,13 +1,12 @@
 import io
 import sqlite3
-from typing import Tuple, Union
+from typing import Tuple
 import pandas as pd
 from matplotlib import pyplot as plt
 from PIL import Image
 
 from scripts.sql_parser.constants import *
 from scripts.sql_parser.table_operations import *
-from utils import *
 
 ALL_TABLES = 'SELECT name FROM sqlite_master WHERE type="table";'
 

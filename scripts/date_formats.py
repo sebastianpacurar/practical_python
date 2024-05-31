@@ -1,23 +1,9 @@
 from datetime import datetime
 
-from tabulate import tabulate
+from utils_global.ConsoleTable import ConsoleTable
 
 now = datetime.now()
-
-
-class Table:
-    def __init__(self, data, headers=None):
-        self._headers = headers if headers else ['Notation', 'Example', 'Description']
-        self._rows = tabulate(data, headers=self._headers, tablefmt='fancy_grid', stralign='center').split('\n')
-        self.process_table()
-
-    def process_table(self):
-        header = self._rows[1]
-        self._rows[1] = header.replace('=', '-')
-        self._rows = [f"\033[{90}m{content}\033[0m" for content in self._rows]  # set color to 90 ansi val
-
-    def display(self):
-        print('\n'.join(self._rows))
+headers = ['Notation', 'Example', 'Description']
 
 
 def weekday_and_week_number_formatting():
@@ -30,8 +16,7 @@ def weekday_and_week_number_formatting():
         ['%W', f'{now:%W}', 'week number of the year (monday is first)'],
         ['%V', f'{now:%V}', 'ISO 8601 week number'],
     ]
-
-    Table(data).display()
+    ConsoleTable(data, headers=headers).display()
 
 
 def month_formatting():
@@ -41,7 +26,7 @@ def month_formatting():
         ['%b', f'{now:%b}', 'abbreviated month name'],
         ['%m', f'{now:%m}', 'month as zero-padded (01-12)'],
     ]
-    Table(data).display()
+    ConsoleTable(data, headers=headers).display()
 
 
 def day_year_formatting():
@@ -54,7 +39,7 @@ def day_year_formatting():
         ['%G', f'{now:%G}', 'ISO 8601 year with century'],
         ['%g', f'{now:%g}', 'ISO 8601 year without century']
     ]
-    Table(data).display()
+    ConsoleTable(data, headers=headers).display()
 
 
 def time_formatting():
@@ -69,7 +54,7 @@ def time_formatting():
         ['%p', f'{now:%p}', 'AM or PM'],
         ['%T', f'{now:%T}', 'time as HH:MM:SS']
     ]
-    Table(data).display()
+    ConsoleTable(data, headers=headers).display()
 
 
 def date_formatting():
@@ -79,7 +64,7 @@ def date_formatting():
         ['%D', f'{now:%D}', 'date as MM/DD/YY'],
         ['%F', f'{now:%F}', 'date as YYYY-MM-DD']
     ]
-    Table(data).display()
+    ConsoleTable(data, headers=headers).display()
 
 
 def various_combinations():
@@ -107,7 +92,7 @@ def various_combinations():
         ['extended date and time', '%A, %B %d, %Y at %I:%M %p', f'{now:%A, %B %d, %Y at %I:%M %p}'],
         ['database timestamp', '%Y-%m-%d %H:%M:%S.%f', f'{now:%Y-%m-%d %H:%M:%S.%f}']
     ]
-    Table(data, headers=['Description', 'Format', 'Example']).display()
+    ConsoleTable(data, headers=['Description', 'Format', 'Example']).display()
 
 
 if __name__ == '__main__':
