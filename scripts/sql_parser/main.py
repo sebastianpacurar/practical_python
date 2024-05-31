@@ -263,4 +263,3 @@ if __name__ == '__main__':
         group_by=['Employees.LastName'],
         order_by=('AvgOrderAmount', -1)
     ))
-
