@@ -2,7 +2,7 @@ import json
 import os
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from pydantic import BaseModel, field_serializer, Field, ConfigDict
 from faker import Faker
@@ -24,6 +24,7 @@ import random
 """
 
 fake = Faker()
+books_dir_path = os.path.join('..', '..', 'data_sets', 'test_data', 'books')
 
 
 class Book(BaseModel):
@@ -36,11 +37,11 @@ class Book(BaseModel):
     isbn_13: str = Field(alias='ISBN-13')
     price: float = Field(alias='Price')
     id: str = Field(alias='u_id', default_factory=lambda: str(uuid.uuid4()))
-    dt: datetime = Field(alias='Creation Date', default_factory=lambda: datetime.now(timezone.utc))
+    dt: datetime = Field(alias='Creation Date', default_factory=lambda: datetime.now())
 
     @field_serializer("dt")
     def serialize_datetime_to_json(self, value):
-        return value.strftime("%A, %B %d, %Y at %I:%M %p")
+        return value.strftime("%Y-%m-%d %H:%M:%S.%f")
 
 
 def gen_fake_book() -> Book:
@@ -59,14 +60,13 @@ def create_books_list(num_entries: int):
     books_list: list[Book] = []
     for _ in range(num_entries):
         books_list.append(gen_fake_book())
-        time.sleep(.05)
+        time.sleep(.01)  # get different time values
     return books_list
 
 
 if __name__ == '__main__':
     time_stamp = datetime.now().strftime('%Y%m%dT%H%M%S')
-    file_name = f'books-{time_stamp}.json'
-    books_dir_path = os.path.join('..', 'data_sets', 'test_data', 'books')
+    file_name = f'books_{time_stamp}.json'
     file_path = os.path.join(books_dir_path, file_name)
 
     books = create_books_list(100)
@@ -75,5 +75,4 @@ if __name__ == '__main__':
     with open(file_path, "w") as f:
         f.write(json.dumps(json_data, indent=4))
 
-    print(books)
-    print(f'file ${file_name} created in {books_dir_path}')
+    print(f'file {file_name} created in {books_dir_path}')
