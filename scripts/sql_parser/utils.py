@@ -1,28 +1,27 @@
 import re
-from typing import Optional, Dict, List
 
 from enums import SqlFunctions, ColsAggregations
 
 
-def get_int_or_zero(x):
+def get_int_or_zero(x: int | str) -> int:
     try:
         return int(x)
     except (ValueError, TypeError):
         return 0
 
 
-def get_list_or_zero(x):
+def get_list_or_zero(x: list | str) -> list | int:
     return x if isinstance(x, list) and len(x) > 0 else 0
 
 
-def str_val(*args):
+def str_val(*args: str) -> str | tuple:
     if len(args) == 1:
         return args[0] if args[0].isalpha() else f'"{args[0]}"'
     else:
         return tuple(x if x.isalpha() else f'"{x}"' for x in args)
 
 
-def and_or_operator(x):
+def and_or_operator(x: str) -> str:
     if x.startswith('&'):
         return 'AND'
     elif x.startswith('|'):
@@ -32,7 +31,7 @@ def and_or_operator(x):
 
 
 # apply aggregation and alias to column name. eg: "count=UnitPrice:UP" translated to: COUNT(UnitPrice) AS UP
-def format_cols_query(cols):
+def format_cols_query(cols: list[str]) -> list[str]:
     form_cols = []
     for col in cols:
         if '=' in col and ':' in col:
@@ -57,7 +56,7 @@ def format_cols_query(cols):
 
 
 # parse tables in dictionaries, in a list. parse all displayed columns in a single list
-def process_multi_table_join(tables, col_agg):
+def process_multi_table_join(tables: list[dict], col_agg: dict | None) -> tuple[list[dict], list[str]]:
     tables_data = []
     formatted_cols = []
 
@@ -160,7 +159,7 @@ def process_multi_table_join(tables, col_agg):
     return tables_data, formatted_cols
 
 
-def process_two_table_join(table):
+def process_two_table_join(table: dict) -> tuple[dict[str, str], list[str]]:
     t_title = table.get('name')
 
     formatted_cols = []
@@ -181,7 +180,7 @@ def process_two_table_join(table):
     return tables_data, formatted_cols
 
 
-def format_join_type(join_type):
+def format_join_type(join_type: str) -> str:
     joins = {
         'i': 'INNER',
         'l': 'LEFT',
@@ -194,7 +193,7 @@ def format_join_type(join_type):
 
 
 # check if string is BETWEEN aggregation. eg: "10<UnitPrice<20" translated to: UnitPrice BETWEEN 10 AND 20
-def get_between_agg(expression):
+def get_between_agg(expression: str) -> tuple[bool, list[str] | None]:
     is_valid = False
     res = None
 
@@ -219,9 +218,9 @@ def get_between_agg(expression):
 def get_table(
         name: str,
         shared: str,
-        cols: Optional[List[str]] = None,
-        join: Optional[str] = None
-) -> Dict[str, str]:
+        cols: list[str] = None,
+        join: str = None
+) -> dict[str, str]:
     res = {'name': name, 'shared': shared, 'cols': cols}
     if join:
         res.update({'join': join})

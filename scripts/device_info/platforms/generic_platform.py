@@ -6,7 +6,7 @@ import psutil
 
 class GenericPlatform(ABC):
     def __init__(self):
-        self.__sys_info = {
+        self.__sys_info: dict[str, str | dict] = {
             'System': platform.system(),
             'Node Name': platform.node(),
             'Release': platform.release(),
@@ -22,10 +22,10 @@ class GenericPlatform(ABC):
         }
         self.__init_data()
 
-    def set_sys_info_entry_key(self, key, entry_key, entry_value):
+    def set_sys_info_entry_key(self, key: str, entry_key: str, entry_value: str | dict) -> None:
         self.__sys_info.get(key)[entry_key] = entry_value
 
-    def print_platform_info(self):
+    def print_platform_info(self) -> None:
         for k, v in self.__sys_info.items():
             if isinstance(v, dict):
                 print(f'\n{k}')
@@ -34,7 +34,7 @@ class GenericPlatform(ABC):
             else:
                 print(f'{k}: {v}')
 
-    def __init_data(self):
+    def __init_data(self) -> None:
         self.__get_disk_info()
         self.__get_network_hardware_info()
         self.__get_network_bandwidth_info()
@@ -73,17 +73,17 @@ class GenericPlatform(ABC):
             }
 
     @abstractmethod
-    def get_gpu_info(self):
+    def get_gpu_info(self) -> None:
         ...
 
     @abstractmethod
-    def get_storage_info(self):
+    def get_storage_info(self) -> None:
         ...
 
     @abstractmethod
-    def battery_information(self):
+    def battery_information(self) -> None:
         ...
 
     @abstractmethod
-    def is_laptop(self):
+    def is_laptop(self) -> bool:
         ...

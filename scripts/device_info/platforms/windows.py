@@ -1,5 +1,4 @@
 import subprocess
-
 import psutil
 import os
 import wmi
@@ -8,31 +7,26 @@ from device_info.platforms.generic_platform import GenericPlatform
 
 
 class Windows(GenericPlatform):
-    def get_gpu_info(self):
-        def get_gpu_temperature():
-            temps = []
+    def get_gpu_info(self) -> None:
+        def get_gpu_temperature() -> list[int]:
+            temps: list[int] = []
             try:
-                # Get NVIDIA GPU temperature using NVIDIA-SMI
-                res = subprocess.check_output(
+                res: str = subprocess.check_output(
                     ['nvidia-smi', '--query-gpu=temperature.gpu', '--format=csv,noheader,nounits'], text=True)
                 temps = [int(t.strip()) for t in res.splitlines()]
             except (subprocess.CalledProcessError, FileNotFoundError):
-                # NVIDIA-SMI not found or no NVIDIA GPU
                 try:
-                    # Get AMD GPU temperature using ADL (AMD Display Library)
-                    if os.path.exists('ADL.exe'):  # Check if ADL.exe exists
+                    if os.path.exists('ADL.exe'):
                         res = subprocess.check_output(['ADL.exe', 'temperature', 'get', '0'], text=True)
                         temps += [int(t.split('=')[1]) for t in res.splitlines()]
                     else:
-                        # Handle the case when ADL.exe is not found
                         print("ADL.exe does not exist. please install ADL to use this")
                 except (subprocess.CalledProcessError, FileNotFoundError):
-                    # ADL not found or no AMD GPU
                     pass
 
             return temps
 
-        gpu_temps = get_gpu_temperature()
+        gpu_temps: list[int] = get_gpu_temperature()
         if gpu_temps:
             for i, temp in enumerate(gpu_temps, 1):
                 self.set_sys_info_entry_key('GPU', f'GPU {i}', {
@@ -43,7 +37,7 @@ class Windows(GenericPlatform):
                 'Temperature (°C)': 'N/A',
             })
 
-    def get_storage_info(self):
+    def get_storage_info(self) -> None:
         try:
             c = wmi.WMI()
             for disk in c.Win32_DiskDrive():
@@ -54,7 +48,7 @@ class Windows(GenericPlatform):
         except Exception as e:
             print(f'error fetching storage information: {e}')
 
-    def battery_information(self):
+    def battery_information(self) -> None:
         try:
             battery = psutil.sensors_battery()
             if battery:
@@ -63,8 +57,8 @@ class Windows(GenericPlatform):
         except ImportError:
             pass
 
-    def is_laptop(self):
+    def is_laptop(self) -> bool:
         try:
-            return psutil.sensors_battery()
+            return psutil.sensors_battery() is not None
         except AttributeError:
             return False

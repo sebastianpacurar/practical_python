@@ -2,13 +2,13 @@ from datetime import datetime
 
 from utils_global.ConsoleTable import ConsoleTable
 
-now = datetime.now()
-headers = ['Notation', 'Example', 'Description']
+now: datetime = datetime.now()
+headers: list[str] = ['Notation', 'Example', 'Description']
 
 
-def weekday_and_week_number_formatting():
+def weekday_and_week_number_formatting() -> None:
     print('\nWeekday and Week Number Formatting')
-    data = [
+    data: list[list[str]] = [
         ['%A', f'{now:%A}', 'full weekday name'],
         ['%a', f'{now:%a}', 'abbreviated weekday name'],
         ['%w', f'{now:%w}', 'weekday as number (0=sunday, 6=saturday)'],
@@ -19,9 +19,9 @@ def weekday_and_week_number_formatting():
     ConsoleTable(data, headers=headers).display()
 
 
-def month_formatting():
+def month_formatting() -> None:
     print('\nMonth Formatting:')
-    data = [
+    data: list[list[str]] = [
         ['%B', f'{now:%B}', 'full month name'],
         ['%b', f'{now:%b}', 'abbreviated month name'],
         ['%m', f'{now:%m}', 'month as zero-padded (01-12)'],
@@ -29,9 +29,9 @@ def month_formatting():
     ConsoleTable(data, headers=headers).display()
 
 
-def day_year_formatting():
+def day_year_formatting() -> None:
     print('\nDay and Year Formatting:')
-    data = [
+    data: list[list[str]] = [
         ['%d', f'{now:%d}', 'day of the month (01-31)'],
         ['%j', f'{now:%j}', 'day of the year (001-366)'],
         ['%Y', f'{now:%Y}', 'year with all digits'],
@@ -42,9 +42,9 @@ def day_year_formatting():
     ConsoleTable(data, headers=headers).display()
 
 
-def time_formatting():
+def time_formatting() -> None:
     print('\nTime Formatting:')
-    data = [
+    data: list[list[str]] = [
         ['%X', f'{now:%X}', 'locale appropriate time representation'],
         ['%H', f'{now:%H}', 'hour (00-23)'],
         ['%I', f'{now:%I}', 'hour (01-12)'],
@@ -57,9 +57,9 @@ def time_formatting():
     ConsoleTable(data, headers=headers).display()
 
 
-def date_formatting():
+def date_formatting() -> None:
     print('\nDate Formatting:')
-    data = [
+    data: list[list[str]] = [
         ['%x', f'{now:%x}', 'locale appropriate date representation'],
         ['%D', f'{now:%D}', 'date as MM/DD/YY'],
         ['%F', f'{now:%F}', 'date as YYYY-MM-DD']
@@ -67,9 +67,9 @@ def date_formatting():
     ConsoleTable(data, headers=headers).display()
 
 
-def various_combinations():
+def various_combinations() -> None:
     print('\nVarious Combinations:')
-    data = [
+    data: list[list[str]] = [
         ['ISO 8601 format', '%Y-%m-%dT%H:%M:%S', f'{now:%Y-%m-%dT%H:%M:%S}'],
         ['RFC 2822 format', '%a, %d %b %Y %H:%M:%S %z', f'{now:%a, %d %b %Y %H:%M:%S %z}'],
         ['ISO 8601 with TZ', '%Y-%m-%dT%H:%M:%S%z', f'{now:%Y-%m-%dT%H:%M:%S%z}'],

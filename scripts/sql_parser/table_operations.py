@@ -1,11 +1,9 @@
-from typing import Optional, List, Dict, Union
-
 from scripts.sql_parser.enums import FilterCondition
 from scripts.sql_parser.utils import *
 
 
 # covers LIMIT and OFFSET clauses
-def get_limit_sql(limit_param, offset_param, order_by_param):
+def get_limit_sql(limit_param: str | int | None, offset_param: str | int | None, order_by_param: str | None) -> str:
     sql = ''
     if limit_param:
         lim = get_int_or_zero(limit_param)
@@ -24,8 +22,8 @@ def get_limit_sql(limit_param, offset_param, order_by_param):
 
 # covers GROUP BY clause
 def get_group_by_sql(
-        group_by_param: Union[List[str], str],
-        tables_data: Optional[List[Dict[str, str]]] = None
+        group_by_param: list[str] | str,
+        tables_data: list[dict[str, str]] = None
 ) -> str:
     sql = ''
     if group_by_param:
@@ -50,7 +48,7 @@ def get_group_by_sql(
 # covers ORDER BY clause
 def get_order_by_sql(
         order_by_param: str,
-        tables_data: Optional[List[Dict[str, str]]] = None
+        tables_data: list[dict[str, str]] = None
 ) -> str:
     sql = ''
     if order_by_param:
@@ -71,7 +69,7 @@ def get_order_by_sql(
 
 # covers WHERE clause
 # TODO Update to handle table aliasing
-def get_where_sql(query, where_param):
+def get_where_sql(query: str, where_param: list[str] | None) -> str:
     sql = ''
     if where_param:
         if get_list_or_zero(where_param):
@@ -93,7 +91,7 @@ def get_where_sql(query, where_param):
 
 
 # covers LIKE clause
-def get_like_sql(c, sw, ew):
+def get_like_sql(c: tuple[str, str] | None, sw: tuple[str, str] | None, ew: tuple[str, str] | None) -> str:
     sql = ''
     if c or sw or ew:
         cond = 'contains' if c else 'starts_with' if sw else 'ends_with'
@@ -105,7 +103,7 @@ def get_like_sql(c, sw, ew):
 
 
 # covers JOIN clause for more than 2 tables
-def get_join_multi_table_sql(tables_data, formatted_cols, distinct):
+def get_join_multi_table_sql(tables_data: list[dict[str, str | list[str]]], formatted_cols: list[str], distinct: str) -> str:
     sql = f'SELECT {distinct}'
     sql += ','.join(formatted_cols)
     sql += f'\nFROM {tables_data[0].get("title")}\n'
@@ -117,7 +115,13 @@ def get_join_multi_table_sql(tables_data, formatted_cols, distinct):
 
 
 # covers JOIN clause for 2 tables only
-def get_join_two_table_sql(table_left, table_right, distinct, join, shared_col):
+def get_join_two_table_sql(
+        table_left: dict[str, str | list[str]],
+        table_right: dict[str, str | list[str]],
+        distinct: str,
+        join: str,
+        shared_col: str
+) -> str:
     l_table, l_cols = process_two_table_join(table_left)
     r_table, r_cols = process_two_table_join(table_right)
     cols = l_cols + r_cols
@@ -131,5 +135,5 @@ def get_join_two_table_sql(table_left, table_right, distinct, join, shared_col):
 
 
 # covers DISTINCT clause
-def get_distinct_sql(distinct_param):
+def get_distinct_sql(distinct_param: bool) -> str:
     return 'DISTINCT ' if distinct_param is True else ''

@@ -1,6 +1,6 @@
 import io
+import os
 import sqlite3
-from typing import Tuple
 import pandas as pd
 from matplotlib import pyplot as plt
 from PIL import Image
@@ -32,18 +32,18 @@ class SqlParser:
     def table(
             self,
             name: str,
-            cols: Optional[List[str]] = '*',
-            contains: Optional[Tuple[str, Union[str, int, float]]] = None,
-            starts_with: Optional[Tuple[str, Union[str, int, float]]] = None,
-            ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
-            distinct: Optional[bool] = False,
-            where: Optional[List[str]] = None,
-            group_by: Optional[Union[str, List[str]]] = None,
-            order_by: Optional[Tuple[str, int]] = None,
-            limit: Optional[int] = 0,
-            offset: Optional[int] = 0,
-            subq: Optional[bool] = False
-    ) -> Union[pd.DataFrame, str]:
+            cols: list[str] = '*',
+            contains: tuple[str, str | int | float] = None,
+            starts_with: tuple[str, str | int | float] = None,
+            ends_with: tuple[str, str | int | float] = None,
+            distinct: bool = False,
+            where: list[str] = None,
+            group_by: str | list[str] = None,
+            order_by: tuple[str, int] = None,
+            limit: int = 0,
+            offset: int = 0,
+            subq: bool = False
+    ) -> pd.DataFrame | str:
         name = str_val(name)
         distinct = get_distinct_sql(distinct)
         t_cols = '*'
@@ -71,22 +71,21 @@ class SqlParser:
     # join 2 tables only
     def join(
             self,
-            table_left: Dict[str, Union[str, List[str]]],
-            table_right: Dict[str, Union[str, List[str]]],
+            table_left: dict[str, str | list[str]],
+            table_right: dict[str, str | list[str]],
             shared_col: str,
-            join: Optional[str] = 'i',
-            contains: Optional[Tuple[str, Union[str, int, float]]] = None,
-            starts_with: Optional[Tuple[str, Union[str, int, float]]] = None,
-            ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
-            distinct: Optional[bool] = False,
-            where: Optional[List[str]] = None,
-            group_by: Optional[str] = None,
-            order_by: Optional[Tuple[str, int]] = None,
-            offset: Optional[int] = 0,
-            limit: Optional[int] = 0,
-
-            subq: Optional[bool] = False
-    ) -> Union[pd.DataFrame, str]:
+            join: str = 'i',
+            contains: tuple[str, str | int | float] = None,
+            starts_with: tuple[str, str | int | float] = None,
+            ends_with: tuple[str, str | int | float] = None,
+            distinct: bool = False,
+            where: list[str] = None,
+            group_by: str = None,
+            order_by: tuple[str, int] = None,
+            offset: int = 0,
+            limit: int = 0,
+            subq: bool = False
+    ) -> pd.DataFrame | str:
         distinct = get_distinct_sql(distinct)
 
         query = get_join_two_table_sql(table_left, table_right, distinct, join, shared_col)
@@ -104,19 +103,19 @@ class SqlParser:
     # join more than 2 tables
     def multi_join(
             self,
-            tables: List[Dict[str, Union[str, List[str]]]],
-            contains: Optional[Tuple[str, Union[str, int, float]]] = None,
-            starts_with: Optional[Tuple[str, Union[str, int, float]]] = None,
-            ends_with: Optional[Tuple[str, Union[str, int, float]]] = None,
-            distinct: Optional[bool] = False,
-            where: Optional[List[str]] = None,
-            group_by: Optional[Union[List[str], str]] = None,
-            order_by: Optional[Tuple[str, int]] = None,
-            offset: Optional[int] = 0,
-            limit: Optional[int] = 0,
-            col_agg: Optional[Dict[str, Union[List[str], str]]] = None,
-            subq: Optional[bool] = False
-    ) -> Union[pd.DataFrame, str]:
+            tables: list[dict[str, str | list[str]]],
+            contains: tuple[str, str | int | float] = None,
+            starts_with: tuple[str, str | int | float] = None,
+            ends_with: tuple[str, str | int | float] = None,
+            distinct: bool = False,
+            where: list[str] = None,
+            group_by: list[str] | str = None,
+            order_by: tuple[str, int] = None,
+            offset: int = 0,
+            limit: int = 0,
+            col_agg: dict[str, list[str] | str] = None,
+            subq: bool = False
+    ) -> pd.DataFrame | str:
         distinct = get_distinct_sql(distinct)
 
         # grab the formatted tables, and all the columns
@@ -182,9 +181,9 @@ class SqlParser:
 
 
 if __name__ == '__main__':
-    NC_PATH = '../../data_sets/db/northwind.db'
-    SC_PATH = '../../data_sets/db/sakila.db'
-    CC_PATH = '../../data_sets/db/covid19.db'
+    NC_PATH = os.path.join('..', '..', 'data_sets', 'db', 'northwind.db')
+    SC_PATH = os.path.join('..', '..', 'data_sets', 'db', 'sakila.db')
+    CC_PATH = os.path.join('..', '..', 'data_sets', 'db', 'covid19.db')
 
     nc, sc, cc = SqlParser(NC_PATH), SqlParser(SC_PATH), SqlParser(CC_PATH)
     nct, sct, cct = nc.table, sc.table, cc.table

@@ -3,7 +3,7 @@ from enum import Enum
 
 class TextColor(Enum):
     @property
-    def ansi_code(self):
+    def ansi_code(self) -> str:
         """generate the ANSI escape code for the text color represented by the enum value
         Returns:
             str: string containing the setup request and the applied color value, formatted
@@ -14,7 +14,7 @@ class TextColor(Enum):
         """
         return f'\033[38;5;{self.value}m'
 
-    def color_text(self, text_content):
+    def color_text(self, text_content: str) -> str:
         """apply the text color represented by the enum value to the provided text content
         Args:
             text_content (str): the text content to which the color will be applied
@@ -54,7 +54,7 @@ class ColorPalette(TextColor):
     WHITE = 255
 
 
-def display_colors():
+def display_colors() -> None:
     print('Text Colors:')
     for color in ColorPalette:
         print(color.color_text(color.name.replace('_', ' ').title()))
