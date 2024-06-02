@@ -56,9 +56,9 @@ def gen_fake_book() -> Book:
     )
 
 
-def create_books_list(num_entries: int):
+def create_books_list(count: int) -> list[Book]:
     books_list: list[Book] = []
-    for _ in range(num_entries):
+    for _ in range(count):
         books_list.append(gen_fake_book())
         time.sleep(.01)  # get different time values
     return books_list

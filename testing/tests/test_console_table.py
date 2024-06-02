@@ -6,16 +6,16 @@ from utils_global.console_table.Layout import Layout
 
 
 @pytest.mark.parametrize('layout', list(Layout))
-def test_table_layouts(layout):
-    data = [
+def test_table_layouts(layout: Layout) -> None:
+    data: list[list[str]] = [
         ['Person One', 24, 3.5],
         ['Person Two', 19, 3.8],
         ['Person Three', 22, 3.1]
     ]
-    headers = ['Name', 'Age', 'GPA']
-    table = ConsoleTable(data, headers, layout=layout)
+    headers: list[str] = ['Name', 'Age', 'GPA']
+    table: ConsoleTable = ConsoleTable(data, headers, layout=layout)
 
-    expected_table = tabulate(
+    expected_table: list[str] = tabulate(
         data,
         headers=headers,
         tablefmt=layout.value,
@@ -25,23 +25,23 @@ def test_table_layouts(layout):
     print('\n')
     table.display()
     print('\n')
-    assert table.build_tabulate() == expected_table, 'Built table does not match expected table'
+    assert table.build_tabulate() == expected_table, 'built table does not match expected table'
 
 
-def test_display(capsys):
-    data = [
+def test_display(capsys) -> None:
+    data: list[list[str]] = [
         ['Person One', 24, 3.5],
         ['Person Two', 19, 3.8],
         ['Person Three', 22, 3.1]
     ]
-    headers = ['Name', 'Age', 'GPA']
-    table = ConsoleTable(data, headers)
+    headers: list[str] = ['Name', 'Age', 'GPA']
+    table: ConsoleTable = ConsoleTable(data, headers)
     table._rows = table.build_tabulate()
 
     table.display()
 
     captured = capsys.readouterr()
-    output = captured.out.strip()
+    output: str = captured.out.strip()
     assert "Person One" in output
     assert "Person Two" in output
     assert "Person Three" in output

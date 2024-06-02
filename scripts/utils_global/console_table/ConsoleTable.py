@@ -31,11 +31,8 @@ class ConsoleTable:
             stralign=self._str_align
         ).split('\n')
 
-    def process_table(self) -> None:
+    def display(self) -> None:
         header: str = self._rows[1]
         self._rows[1] = header.replace('=', '-')
         self._rows = [self._text_color.color_text(content) for content in self._rows]
-
-    def display(self) -> None:
-        self.process_table()
         print('\n'.join(self._rows))
