@@ -1,9 +1,11 @@
 from datetime import datetime
 
-from utils_global.ConsoleTable import ConsoleTable
+from utils_global.console_table.ConsoleTable import ConsoleTable
+from utils_global.console_table.Layout import Layout
 
 now: datetime = datetime.now()
 headers: list[str] = ['Notation', 'Example', 'Description']
+layout: Layout = Layout.FANCY_OUTLINE
 
 
 def weekday_and_week_number_formatting() -> None:
@@ -16,7 +18,7 @@ def weekday_and_week_number_formatting() -> None:
         ['%W', f'{now:%W}', 'week number of the year (monday is first)'],
         ['%V', f'{now:%V}', 'ISO 8601 week number'],
     ]
-    ConsoleTable(data, headers=headers).display()
+    ConsoleTable(data, headers=headers, layout=layout).display()
 
 
 def month_formatting() -> None:
@@ -26,7 +28,7 @@ def month_formatting() -> None:
         ['%b', f'{now:%b}', 'abbreviated month name'],
         ['%m', f'{now:%m}', 'month as zero-padded (01-12)'],
     ]
-    ConsoleTable(data, headers=headers).display()
+    ConsoleTable(data, headers=headers, layout=layout).display()
 
 
 def day_year_formatting() -> None:
@@ -39,7 +41,7 @@ def day_year_formatting() -> None:
         ['%G', f'{now:%G}', 'ISO 8601 year with century'],
         ['%g', f'{now:%g}', 'ISO 8601 year without century']
     ]
-    ConsoleTable(data, headers=headers).display()
+    ConsoleTable(data, headers=headers, layout=layout).display()
 
 
 def time_formatting() -> None:
@@ -54,7 +56,7 @@ def time_formatting() -> None:
         ['%p', f'{now:%p}', 'AM or PM'],
         ['%T', f'{now:%T}', 'time as HH:MM:SS']
     ]
-    ConsoleTable(data, headers=headers).display()
+    ConsoleTable(data, headers=headers, layout=layout).display()
 
 
 def date_formatting() -> None:
@@ -64,7 +66,7 @@ def date_formatting() -> None:
         ['%D', f'{now:%D}', 'date as MM/DD/YY'],
         ['%F', f'{now:%F}', 'date as YYYY-MM-DD']
     ]
-    ConsoleTable(data, headers=headers).display()
+    ConsoleTable(data, headers=headers, layout=layout).display()
 
 
 def various_combinations() -> None:
@@ -92,7 +94,7 @@ def various_combinations() -> None:
         ['extended date and time', '%A, %B %d, %Y at %I:%M %p', f'{now:%A, %B %d, %Y at %I:%M %p}'],
         ['database timestamp', '%Y-%m-%d %H:%M:%S.%f', f'{now:%Y-%m-%d %H:%M:%S.%f}']
     ]
-    ConsoleTable(data, headers=['Description', 'Format', 'Example']).display()
+    ConsoleTable(data, headers=['Description', 'Format', 'Example'], is_indexed=True, layout=Layout.FANCY_GRID).display()
 
 
 if __name__ == '__main__':
