@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 from datetime import datetime
 import random
@@ -7,9 +8,9 @@ from faker import Faker
 
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 
-from utils_global.faker_locales import latin_alphabet_locales, one_per_each
-from utils_global.console_table.ConsoleTable import ConsoleTable
-from utils_global.console_table.Layout import Layout
+from scripts.utils_global.console_table.ConsoleTable import ConsoleTable
+from scripts.utils_global.console_table.Layout import Layout
+from scripts.utils_global.faker_locales import latin_alphabet_locales, one_per_each
 
 """
     model example:
@@ -81,14 +82,14 @@ def build_console_table() -> None:
 
 
 def write_to_json() -> None:
-    time_stamp: str = datetime.now().strftime('%Y%m%dT%H%M%S')
-    file_name: str = f'locale_user_{time_stamp}.json'
-    file_path: str = os.path.join(locale_users_dir_path, file_name)
+    time_stamp = datetime.now().strftime('%Y%m%dT%H%M%S')
+    file_name = f'locale_user_{time_stamp}.json'
+    fp = os.path.join(locale_users_dir_path, file_name)
 
     users: list[LocaleUser] = create_locale_users_list(latin_alphabet_locales, 100)
     json_data: list[dict] = [user.model_dump(by_alias=True) for user in users]
 
-    with open(file_path, "w") as f:
+    with open(fp, "w") as f:
         f.write(json.dumps(json_data, indent=4))
 
     print(f'file {file_name} created in {locale_users_dir_path}')

@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import platform
-
 import psutil
 
 

@@ -1,6 +1,6 @@
 import re
 
-from enums import SqlFunctions, ColsAggregations
+from scripts.sql_parser.enums import SqlFunctions, ColsAggregations
 
 
 def get_int_or_zero(x: int | str) -> int:

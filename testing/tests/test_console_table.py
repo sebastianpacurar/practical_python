@@ -1,8 +1,8 @@
 import pytest
 from tabulate import tabulate
 
-from utils_global.console_table.ConsoleTable import ConsoleTable
-from utils_global.console_table.Layout import Layout
+from scripts.utils_global.console_table.ConsoleTable import ConsoleTable
+from scripts.utils_global.console_table.Layout import Layout
 
 
 @pytest.mark.parametrize('layout', list(Layout))

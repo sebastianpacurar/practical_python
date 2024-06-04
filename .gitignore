@@ -5,7 +5,7 @@ practical_python.iml
 data_sets/test_data/books/books_*.json
 data_sets/test_data/locale_users/locale_user_*.json
 
-testing/cache
+testing/pytest_cache
 
 .env
 .venv

@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from utils_global.console_table.ConsoleTable import ConsoleTable
-from utils_global.console_table.Layout import Layout
+from scripts.utils_global.console_table.ConsoleTable import ConsoleTable
+from scripts.utils_global.console_table.Layout import Layout
 
 now: datetime = datetime.now()
 headers: list[str] = ['Notation', 'Example', 'Description']

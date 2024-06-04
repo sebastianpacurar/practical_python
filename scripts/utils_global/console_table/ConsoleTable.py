@@ -1,7 +1,9 @@
+import sys
+
 from tabulate import tabulate
 
-from utils_global.ColorPalette import ColorPalette
-from utils_global.console_table.Layout import Layout
+from scripts.utils_global.ColorPalette import ColorPalette
+from scripts.utils_global.console_table.Layout import Layout
 
 
 class ConsoleTable:
@@ -21,6 +23,7 @@ class ConsoleTable:
         self._is_indexed = is_indexed
         self._str_align = str_align
         self._rows = self.build_tabulate()
+        print(sys.path)
 
     def build_tabulate(self) -> list[str]:
         return tabulate(

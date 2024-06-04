@@ -1,7 +1,7 @@
 import re
 import subprocess
 
-from device_info.platforms.generic_platform import GenericPlatform
+from scripts.device_info.platforms.generic_platform import GenericPlatform
 
 
 class Darwin(GenericPlatform):

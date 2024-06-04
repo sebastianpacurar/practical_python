@@ -1,9 +1,9 @@
 import platform
 
-from device_info.platforms.available_platforms import AvailablePlatforms
-from device_info.platforms.darwin import Darwin
-from device_info.platforms.linux import Linux
-from device_info.platforms.windows import Windows
+from scripts.device_info.platforms.available_platforms import AvailablePlatforms
+from scripts.device_info.platforms.darwin import Darwin
+from scripts.device_info.platforms.linux import Linux
+from scripts.device_info.platforms.windows import Windows
 
 if __name__ == '__main__':
     match platform.system():

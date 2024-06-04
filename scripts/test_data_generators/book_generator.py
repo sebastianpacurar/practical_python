@@ -24,7 +24,7 @@ import random
 """
 
 fake = Faker()
-books_dir_path = os.path.join('..', '..', 'data_sets', 'test_data', 'books')
+test_data_path = os.path.join('..', '..', 'data_sets', 'test_data', 'books')
 
 
 class Book(BaseModel):
@@ -67,12 +67,12 @@ def create_books_list(count: int) -> list[Book]:
 if __name__ == '__main__':
     time_stamp = datetime.now().strftime('%Y%m%dT%H%M%S')
     file_name = f'books_{time_stamp}.json'
-    file_path = os.path.join(books_dir_path, file_name)
+    fp = os.path.join(test_data_path, file_name)
 
     books = create_books_list(100)
-    json_data = [book.model_dump(by_alias=True) for book in books]
+    json_data: list[dict] = [books.model_dump(by_alias=True) for books in books]
 
-    with open(file_path, "w") as f:
+    with open(fp, "w") as f:
         f.write(json.dumps(json_data, indent=4))
 
-    print(f'file {file_name} created in {books_dir_path}')
+    print(f'file {file_name} created in {fp}')

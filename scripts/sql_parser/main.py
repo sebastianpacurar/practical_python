@@ -1,7 +1,7 @@
 import os
 
-from sql_parser.SqlParser import SqlParser
-from sql_parser.constants import *
+from scripts.sql_parser.SqlParser import SqlParser
+from scripts.sql_parser.constants import *
 
 if __name__ == '__main__':
     NC_PATH = os.path.join('..', '..', 'data_sets', 'db', 'northwind.db')
