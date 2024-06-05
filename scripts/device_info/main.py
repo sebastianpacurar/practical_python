@@ -16,4 +16,5 @@ if __name__ == '__main__':
         case _:
             raise RuntimeError("Unsupported platform")
 
+    p.prev_print()
     p.print_platform_info()

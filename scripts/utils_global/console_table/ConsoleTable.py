@@ -1,5 +1,3 @@
-import sys
-
 from tabulate import tabulate
 
 from scripts.utils_global.ColorPalette import ColorPalette
@@ -11,6 +9,7 @@ class ConsoleTable:
             self,
             data: list[list],
             headers: list[str],
+            title: str | None = None,
             text_color: ColorPalette = ColorPalette.GRAY_70,
             layout: Layout = Layout.FANCY_GRID,
             is_indexed: bool = False,
@@ -22,8 +21,8 @@ class ConsoleTable:
         self._layout = layout
         self._is_indexed = is_indexed
         self._str_align = str_align
+        self._title = title
         self._rows = self.build_tabulate()
-        print(sys.path)
 
     def build_tabulate(self) -> list[str]:
         return tabulate(
@@ -35,6 +34,8 @@ class ConsoleTable:
         ).split('\n')
 
     def display(self) -> None:
+        if self._title is not None:
+            print(f'\n{self._title}')
         header: str = self._rows[1]
         self._rows[1] = header.replace('=', '-')
         self._rows = [self._text_color.color_text(content) for content in self._rows]

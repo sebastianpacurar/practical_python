@@ -9,7 +9,6 @@ layout: Layout = Layout.FANCY_OUTLINE
 
 
 def weekday_and_week_number_formatting() -> None:
-    print('\nWeekday and Week Number Formatting')
     data: list[list[str]] = [
         ['%A', f'{now:%A}', 'full weekday name'],
         ['%a', f'{now:%a}', 'abbreviated weekday name'],
@@ -18,21 +17,19 @@ def weekday_and_week_number_formatting() -> None:
         ['%W', f'{now:%W}', 'week number of the year (monday is first)'],
         ['%V', f'{now:%V}', 'ISO 8601 week number'],
     ]
-    ConsoleTable(data, headers=headers, layout=layout).display()
+    ConsoleTable(data, title='Weekday and Week Number Formatting:', headers=headers, layout=layout).display()
 
 
 def month_formatting() -> None:
-    print('\nMonth Formatting:')
     data: list[list[str]] = [
         ['%B', f'{now:%B}', 'full month name'],
         ['%b', f'{now:%b}', 'abbreviated month name'],
         ['%m', f'{now:%m}', 'month as zero-padded (01-12)'],
     ]
-    ConsoleTable(data, headers=headers, layout=layout).display()
+    ConsoleTable(data, title='Month Formatting:', headers=headers, layout=layout).display()
 
 
 def day_year_formatting() -> None:
-    print('\nDay and Year Formatting:')
     data: list[list[str]] = [
         ['%d', f'{now:%d}', 'day of the month (01-31)'],
         ['%j', f'{now:%j}', 'day of the year (001-366)'],
@@ -41,11 +38,10 @@ def day_year_formatting() -> None:
         ['%G', f'{now:%G}', 'ISO 8601 year with century'],
         ['%g', f'{now:%g}', 'ISO 8601 year without century']
     ]
-    ConsoleTable(data, headers=headers, layout=layout).display()
+    ConsoleTable(data, title='Day and Year Formatting:', headers=headers, layout=layout).display()
 
 
 def time_formatting() -> None:
-    print('\nTime Formatting:')
     data: list[list[str]] = [
         ['%X', f'{now:%X}', 'locale appropriate time representation'],
         ['%H', f'{now:%H}', 'hour (00-23)'],
@@ -56,21 +52,19 @@ def time_formatting() -> None:
         ['%p', f'{now:%p}', 'AM or PM'],
         ['%T', f'{now:%T}', 'time as HH:MM:SS']
     ]
-    ConsoleTable(data, headers=headers, layout=layout).display()
+    ConsoleTable(data, title='Time Formatting:', headers=headers, layout=layout).display()
 
 
 def date_formatting() -> None:
-    print('\nDate Formatting:')
     data: list[list[str]] = [
         ['%x', f'{now:%x}', 'locale appropriate date representation'],
         ['%D', f'{now:%D}', 'date as MM/DD/YY'],
         ['%F', f'{now:%F}', 'date as YYYY-MM-DD']
     ]
-    ConsoleTable(data, headers=headers, layout=layout).display()
+    ConsoleTable(data, title='Date Formatting:', headers=headers, layout=layout).display()
 
 
 def various_combinations() -> None:
-    print('\nVarious Combinations:')
     data: list[list[str]] = [
         ['ISO 8601 format', '%Y-%m-%dT%H:%M:%S', f'{now:%Y-%m-%dT%H:%M:%S}'],
         ['RFC 2822 format', '%a, %d %b %Y %H:%M:%S %z', f'{now:%a, %d %b %Y %H:%M:%S %z}'],
@@ -94,7 +88,7 @@ def various_combinations() -> None:
         ['extended date and time', '%A, %B %d, %Y at %I:%M %p', f'{now:%A, %B %d, %Y at %I:%M %p}'],
         ['database timestamp', '%Y-%m-%d %H:%M:%S.%f', f'{now:%Y-%m-%d %H:%M:%S.%f}']
     ]
-    ConsoleTable(data, headers=['Description', 'Format', 'Example'], is_indexed=True, layout=Layout.FANCY_GRID).display()
+    ConsoleTable(data, title='Various Combinations:', headers=['Description', 'Format', 'Example'], is_indexed=True, layout=Layout.FANCY_GRID).display()
 
 
 if __name__ == '__main__':
