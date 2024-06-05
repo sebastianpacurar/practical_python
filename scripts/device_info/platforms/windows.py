@@ -44,6 +44,37 @@ class Windows(GenericPlatform):
                 self.set_sys_info_entry_key('Storage', disk.DeviceID, {
                     'Model': disk.Model,
                     'Size (GB)': round(int(disk.Size) / (1024 ** 3), 2),
+                    'Caption': disk.Caption,
+                    'Description': disk.Description,
+                    'Interface Type': disk.InterfaceType,
+                    'Manufacturer': disk.Manufacturer,
+                    'Media Type': disk.MediaType,
+                    'Partitions': disk.Partitions,
+                    'Serial Number': disk.SerialNumber,
+                    'Status': disk.Status,
+                    'Total Cylinders': disk.TotalCylinders,
+                    'Total Heads': disk.TotalHeads,
+                    'Total Sectors': disk.TotalSectors,
+                    'Total Tracks': disk.TotalTracks,
+                    'Tracks Per Cylinder': disk.TracksPerCylinder,
+                    'Bytes Per Sector': disk.BytesPerSector,
+                    'Config Manager Error Code': disk.ConfigManagerErrorCode,
+                    'Config Manager User Config': disk.ConfigManagerUserConfig,
+                    'Creation ClassName': disk.CreationClassName,
+                    'Device ID': disk.DeviceID,
+                    'Firmware Revision': disk.FirmwareRevision,
+                    'Index': disk.Index,
+                    'Media Loaded': disk.MediaLoaded,
+                    'PNP Device ID': disk.PNPDeviceID,
+                    'Sectors Per Track': disk.SectorsPerTrack,
+
+                    # TODO: don't work on windows 11
+                    # 'Availability': disk.Availability,
+                    # 'Default Block Size': disk.DefaultBlockSize,
+                    # 'Max Block Size': disk.MaxBlockSize,
+                    # 'Max Media Size': disk.MaxMediaSize,
+                    # 'Min Block Size': disk.MinBlockSize,
+                    # 'Signature': disk.Signature
                 })
         except Exception as e:
             print(f'error fetching storage information: {e}')
@@ -52,8 +83,18 @@ class Windows(GenericPlatform):
         try:
             battery = psutil.sensors_battery()
             if battery:
+                if battery.secsleft == psutil.POWER_TIME_UNLIMITED:
+                    time_left = "Unlimited"
+                elif battery.secsleft == psutil.POWER_TIME_UNKNOWN:
+                    time_left = "Unknown"
+                else:
+                    hours, remainder = divmod(battery.secsleft, 3600)
+                    minutes, seconds = divmod(remainder, 60)
+                    time_left = f"{hours:02}:{minutes:02}:{seconds:02}"
+
                 self.set_sys_info_entry_key('Battery', 'Percentage', f'{battery.percent}%')
                 self.set_sys_info_entry_key('Battery', 'Plugged In', 'Yes' if battery.power_plugged else 'No')
+                self.set_sys_info_entry_key('Battery', 'Time Left', time_left)
         except ImportError:
             pass
 
