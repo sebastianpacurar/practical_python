@@ -4,7 +4,7 @@ import platform
 from abc import ABC, abstractmethod
 from socket import AddressFamily
 
-from utils_global.console_table.ConsoleTable import ConsoleTable
+from scripts.utils_global.console_table.ConsoleTable import ConsoleTable
 
 
 class GenericPlatform(ABC):
@@ -41,30 +41,30 @@ class GenericPlatform(ABC):
         headers = ['System', 'Node Name', 'Release', 'Version', 'Machine', 'Processor']
         basic_data = [[self.__sys_info[header] for header in headers]]
         nested_data = {key: value for key, value in self.__sys_info.items() if key not in headers}
-        # print basic info
         ConsoleTable(basic_data, title="Basic System Info:", headers=headers).display()
 
         for k, v in nested_data.items():
+            data = []
             if isinstance(v, dict):
-                if k in ['Disks', 'Network', 'Network Bandwidth', 'GPU', 'Storage']:
-                    data = []
+                if k in ['Network', 'Network Bandwidth', 'Disks']:
+                    for name, description in v.items():
+                        headers = ['Interface'] + list(description.keys())
+                        data_row = list(description.values())
+                        data.append([name] + data_row)
+                    ConsoleTable(data, title=f'{k} Info:', headers=headers).display()
+                    continue
+                if k in ['GPU', 'Storage']:
                     for name, description in v.items():
                         headers = list(description.keys())
                         data_row = [i[0] if isinstance(i, list) else i for i in list(description.values())]
-                        interface_row = [name] + data_row
-                        data.append(interface_row)
-                    # print specific Disks, Network, Network Bandwidth, GPU and Storage data
+                        data.append([name] + data_row)
                     ConsoleTable(data, title=f'{k} Info:', headers=[k] + headers).display()
                     continue
-
                 if k == 'Battery':
                     headers = [i for i in v.keys()]
                     data = [[i for i in v.values()]]
-                    # print battery status
                     ConsoleTable(data, title=f'{k} Info:', headers=headers).display()
                     continue
-            else:
-                print(f'{k} :=> {v}')
 
     def __init_data(self) -> None:
         self.__get_disk_info()
@@ -89,19 +89,22 @@ class GenericPlatform(ABC):
 
     def __get_network_hardware_info(self):
         net_info = psutil.net_if_addrs()
-        for interface, addresses in net_info.items():
-            res = {
-                # (WINDOWS RELATED) -- for some reason AddressFamily.AF_LINK does not match the actual mac address family, using -1
-                'MAC': [a.address for a in addresses if a.family == AddressFamily.AF_LINK or a.family == -1],
-                'IPv4': [a.address for a in addresses if a.family == AddressFamily.AF_INET],
-                'IPv6': [a.address for a in addresses if a.family == AddressFamily.AF_INET6]
+        for interf, addresses in net_info.items():
+            info = {
+                'MAC': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_LINK.name],
+                'IPv4': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET.name],
+                'IPv6': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET6.name]
             }
-            for k, v in res.items():
+
+            for k, v in info.items():
                 if isinstance(v, list) and len(v) == 1:
-                    res[k] = v[0]
+                    info[k] = v[0]
+                elif len(v) > 1:
+                    info[k] = '\n'.join(v)
                 else:
-                    res[k] = 'N/A'
-            self.__sys_info['Network'][interface] = res
+                    info[k] = '-'
+
+            self.set_sys_info_entry_key('Network', interf, info)
 
     def __get_network_bandwidth_info(self):
         network_interfaces = psutil.net_io_counters(pernic=True)

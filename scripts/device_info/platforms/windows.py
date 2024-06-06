@@ -1,7 +1,6 @@
 import subprocess
 import psutil
 import os
-import wmi
 
 from scripts.device_info.platforms.generic_platform import GenericPlatform
 
@@ -23,7 +22,6 @@ class Windows(GenericPlatform):
                         print("ADL.exe does not exist. please install ADL to use this")
                 except (subprocess.CalledProcessError, FileNotFoundError):
                     pass
-
             return temps
 
         gpu_temps: list[int] = get_gpu_temperature()
@@ -39,6 +37,7 @@ class Windows(GenericPlatform):
 
     def get_storage_info(self) -> None:
         try:
+            import wmi
             c = wmi.WMI()
             for disk in c.Win32_DiskDrive():
                 self.set_sys_info_entry_key('Storage', disk.DeviceID, {

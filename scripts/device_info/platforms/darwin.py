@@ -1,4 +1,3 @@
-import re
 import subprocess
 
 from scripts.device_info.platforms.generic_platform import GenericPlatform
@@ -35,24 +34,22 @@ class Darwin(GenericPlatform):
 
     def get_storage_info(self) -> None:
         try:
-            info: str = subprocess.check_output(['diskutil', 'list'], text=True)
-            disks: list[str] = info.strip().split('\n\n')  # separate devices
+            info = subprocess.check_output(['diskutil', 'list'], text=True)
+            disks = info.strip().split('\n\n')
             for disk in disks:
-                lines: list[str] = disk.strip().split('\n')
-                disk_name: str = lines[0].split(':')[0]
-                parsed_data: str | list[dict[str, str]] = []
-                # iterate through subtypes
-                for line in lines[2:]:
-                    subtype: dict[str, str] = {}
-                    # replace any single whitespaces to underscores, to merge words together, then split
-                    line = re.sub(r'(?<=\S) (?=\S)', '_', line).split()
-                    if len(line) >= 2:
-                        # grab the last 2 elements
-                        subtype['Identifier'] = line[-1]
-                        subtype['Size'] = line[-2]
-                        parsed_data.append(subtype)
+                lines = disk.strip().split(' ')
+                disk_name = lines[0]
+                detail_info = subprocess.check_output(['diskutil', 'info', disk_name], text=True)
+                details = detail_info.strip().split('\n')
+                disk_data = {}
+                for detail in details:
+                    key_value = detail.split(':')
+                    if len(key_value) == 2:
+                        key, value = key_value
+                        disk_data[key.strip()] = value.strip()
 
-                self.set_sys_info_entry_key('Storage', disk_name, parsed_data)
+                self.set_sys_info_entry_key('Storage', disk_name, disk_data)
+
         except Exception as e:
             print(f'Error fetching storage information: {e}')
 
