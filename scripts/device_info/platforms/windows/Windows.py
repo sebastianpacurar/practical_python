@@ -2,7 +2,8 @@ import subprocess
 import psutil
 import os
 
-from scripts.device_info.platforms.generic_platform import GenericPlatform
+from device_info.platforms.windows.enums import WmiDiskInfo
+from scripts.device_info.platforms.GenericPlatform import GenericPlatform
 
 
 class Windows(GenericPlatform):
@@ -40,43 +41,12 @@ class Windows(GenericPlatform):
             import wmi
             c = wmi.WMI()
             for disk in c.Win32_DiskDrive():
-                self.set_sys_info_entry_key('Storage', disk.DeviceID, {
-                    'Model': disk.Model,
-                    'Size (GB)': round(int(disk.Size) / (1024 ** 3), 2),
-                    'Caption': disk.Caption,
-                    'Description': disk.Description,
-                    'Interface Type': disk.InterfaceType,
-                    'Manufacturer': disk.Manufacturer,
-                    'Media Type': disk.MediaType,
-                    'Partitions': disk.Partitions,
-                    'Serial Number': disk.SerialNumber,
-                    'Status': disk.Status,
-                    'Total Cylinders': disk.TotalCylinders,
-                    'Total Heads': disk.TotalHeads,
-                    'Total Sectors': disk.TotalSectors,
-                    'Total Tracks': disk.TotalTracks,
-                    'Tracks Per Cylinder': disk.TracksPerCylinder,
-                    'Bytes Per Sector': disk.BytesPerSector,
-                    'Config Manager Error Code': disk.ConfigManagerErrorCode,
-                    'Config Manager User Config': disk.ConfigManagerUserConfig,
-                    'Creation ClassName': disk.CreationClassName,
-                    'Device ID': disk.DeviceID,
-                    'Firmware Revision': disk.FirmwareRevision,
-                    'Index': disk.Index,
-                    'Media Loaded': disk.MediaLoaded,
-                    'PNP Device ID': disk.PNPDeviceID,
-                    'Sectors Per Track': disk.SectorsPerTrack,
-
-                    # TODO: don't work on windows 11
-                    # 'Availability': disk.Availability,
-                    # 'Default Block Size': disk.DefaultBlockSize,
-                    # 'Max Block Size': disk.MaxBlockSize,
-                    # 'Max Media Size': disk.MaxMediaSize,
-                    # 'Min Block Size': disk.MinBlockSize,
-                    # 'Signature': disk.Signature
-                })
+                entry_value = {}
+                for info in WmiDiskInfo:
+                    entry_value[info.value] = get_disk_attribute(disk, info)
+                self.set_sys_info_entry_key('Storage', disk.DeviceID, entry_value)
         except Exception as e:
-            print(f'error fetching storage information: {e}')
+            raise ValueError(f"Error retrieving storage information: {e}")
 
     def battery_information(self) -> None:
         try:
@@ -102,3 +72,13 @@ class Windows(GenericPlatform):
             return psutil.sensors_battery() is not None
         except AttributeError:
             return False
+
+
+def get_disk_attribute(disk, attribute: WmiDiskInfo):
+    # calculate free space, or get the specific disk info
+    if attribute == WmiDiskInfo.Size_GB:
+        res = round(int(disk.Size) / (1024 ** 3), 2) if disk.Size else 'Unknown'
+    else:
+        attr_val = getattr(disk, attribute.name, 'Unknown')
+        res = '-' if attr_val is None else attr_val
+    return res

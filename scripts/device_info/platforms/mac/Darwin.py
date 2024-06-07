@@ -1,6 +1,7 @@
 import subprocess
 
-from scripts.device_info.platforms.generic_platform import GenericPlatform
+from scripts.device_info.platforms.GenericPlatform import GenericPlatform
+from scripts.device_info.platforms.mac.enums import BatteryInfo
 
 
 class Darwin(GenericPlatform):
@@ -55,17 +56,38 @@ class Darwin(GenericPlatform):
 
     def battery_information(self) -> None:
         try:
-            battery_info: list[str] = subprocess.check_output(['pmset', '-g', 'batt'], text=True).strip().split('\n')
+            # basic info
+            battery_info = subprocess.check_output(['pmset', '-g', 'batt'], text=True).strip().split('\n')
             if len(battery_info) >= 2:
-                power_source: str = battery_info[0].strip()
-                self.set_sys_info_entry_key('Battery', 'Power Source', power_source)
+                power_source = battery_info[0].strip()
+                self.set_sys_info_entry_key('Battery', 'Current Status', power_source)
 
-                battery_status: list[str] = battery_info[1].strip().split(';')
-                if len(battery_status) >= 3:
-                    self.set_sys_info_entry_key('Battery', 'Status', battery_status[1].strip())
-                    self.set_sys_info_entry_key('Battery', 'Charge', battery_status[2].strip())
-        except subprocess.CalledProcessError:
-            pass
+                battery_status = [status.strip() for status in battery_info[1].strip().split(';')]
+                charging_status = battery_status[1]
+                time_left = ' '.join(battery_status[2].split(' ')[:1])
+
+                try:
+                    int(time_left[0])
+                except ValueError:
+                    time_left = 'No Estimate'
+
+                self.set_sys_info_entry_key('Battery', 'Charging Status', charging_status)
+                self.set_sys_info_entry_key('Battery', 'Time Left', time_left)
+
+            # detailed info
+            ioreg_output = subprocess.check_output(["ioreg", "-r", "-c", "AppleSmartBattery"], text=True)
+            battery_data = {}
+            for line in ioreg_output.split("\n"):
+                parts = [part.strip() for part in line.split('=')]
+                if len(parts) == 2:
+                    key, value = parts
+                    battery_data[key.strip('"')] = value.strip()
+
+            if battery_data:
+                for i in BatteryInfo:
+                    self.set_sys_info_entry_key('Battery', i.name, battery_data.get(i.value, 'Unknown'))
+        except subprocess.CalledProcessError as e:
+            print(f"An error occurred: {e}")
 
     def is_laptop(self) -> bool:
         try:

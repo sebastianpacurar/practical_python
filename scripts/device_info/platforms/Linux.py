@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from scripts.device_info.platforms.generic_platform import GenericPlatform
+from scripts.device_info.platforms.GenericPlatform import GenericPlatform
 
 
 class Linux(GenericPlatform):
