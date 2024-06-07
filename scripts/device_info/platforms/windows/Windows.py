@@ -1,8 +1,10 @@
 import subprocess
+from socket import AddressFamily
+
 import psutil
 import os
 
-from device_info.platforms.windows.enums import WmiDiskInfo
+from scripts.device_info.platforms.windows.enums import WmiDiskInfo
 from scripts.device_info.platforms.GenericPlatform import GenericPlatform
 
 
@@ -36,6 +38,20 @@ class Windows(GenericPlatform):
                 'Temperature (°C)': 'N/A',
             })
 
+    def get_disk_info(self):
+        partitions = psutil.disk_partitions(all=True)
+        for partition in partitions:
+            usage = psutil.disk_usage(partition.mountpoint)
+            info = {
+                'Mount Point': partition.mountpoint,
+                'Total (GB)': round(usage.total / (1024 ** 3), 2),
+                'Used (GB)': round(usage.used / (1024 ** 3), 2),
+                'Free (GB)': round(usage.free / (1024 ** 3), 2),
+                'File System': partition.fstype,
+            }
+
+            self.set_sys_info_entry_key('Disks', partition.device, info)
+
     def get_storage_info(self) -> None:
         try:
             import wmi
@@ -47,6 +63,25 @@ class Windows(GenericPlatform):
                 self.set_sys_info_entry_key('Storage', disk.DeviceID, entry_value)
         except Exception as e:
             raise ValueError(f"Error retrieving storage information: {e}")
+
+    def get_network_hardware_info(self):
+        net_info = psutil.net_if_addrs()
+        for interf, addresses in net_info.items():
+            info = {
+                'MAC': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_LINK.name],
+                'IPv4': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET.name],
+                'IPv6': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET6.name]
+            }
+
+            for k, v in info.items():
+                if isinstance(v, list) and len(v) == 1:
+                    info[k] = v[0]
+                elif len(v) > 1:
+                    info[k] = '\n'.join(v)
+                else:
+                    info[k] = '-'
+
+            self.set_sys_info_entry_key('Network', interf, info)
 
     def battery_information(self) -> None:
         try:

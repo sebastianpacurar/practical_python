@@ -2,7 +2,6 @@ import psutil
 import platform
 
 from abc import ABC, abstractmethod
-from socket import AddressFamily
 
 from scripts.utils_global.console_table.ConsoleTable import ConsoleTable
 
@@ -67,44 +66,13 @@ class GenericPlatform(ABC):
                     continue
 
     def __init_data(self) -> None:
-        self.__get_disk_info()
-        self.__get_network_hardware_info()
+        self.get_network_hardware_info()
         self.__get_network_bandwidth_info()
+        self.get_disk_info()
         self.get_gpu_info(),
         self.get_storage_info(),
         if self.is_laptop():
             self.battery_information()
-
-    def __get_disk_info(self):
-        partitions = psutil.disk_partitions(all=True)
-        for partition in partitions:
-            usage = psutil.disk_usage(partition.mountpoint)
-            self.__sys_info['Disks'][partition.device] = {
-                'Mount Point': partition.mountpoint,
-                'Total (GB)': round(usage.total / (1024 ** 3), 2),
-                'Used (GB)': round(usage.used / (1024 ** 3), 2),
-                'Free (GB)': round(usage.free / (1024 ** 3), 2),
-                'File System': partition.fstype,
-            }
-
-    def __get_network_hardware_info(self):
-        net_info = psutil.net_if_addrs()
-        for interf, addresses in net_info.items():
-            info = {
-                'MAC': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_LINK.name],
-                'IPv4': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET.name],
-                'IPv6': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET6.name]
-            }
-
-            for k, v in info.items():
-                if isinstance(v, list) and len(v) == 1:
-                    info[k] = v[0]
-                elif len(v) > 1:
-                    info[k] = '\n'.join(v)
-                else:
-                    info[k] = '-'
-
-            self.set_sys_info_entry_key('Network', interf, info)
 
     def __get_network_bandwidth_info(self):
         network_interfaces = psutil.net_io_counters(pernic=True)
@@ -115,6 +83,14 @@ class GenericPlatform(ABC):
                 'Packets Sent': stats.packets_sent,
                 'Packets Received': stats.packets_recv,
             }
+
+    @abstractmethod
+    def get_disk_info(self):
+        ...
+
+    @abstractmethod
+    def get_network_hardware_info(self):
+        ...
 
     @abstractmethod
     def get_gpu_info(self) -> None:
