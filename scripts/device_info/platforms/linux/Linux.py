@@ -6,8 +6,14 @@ from scripts.device_info.platforms.GenericPlatform import GenericPlatform
 
 
 class Linux(GenericPlatform):
-    def get_gpu_info(self) -> None:
-        def get_gpu_temperature() -> list[int]:
+    def set_platform_sys_data(self):
+        self.set_disk_partition_size()
+        # self.set_storage_info()
+        self.set_network_info()
+        self.set_gpu_info()
+
+    def set_gpu_info(self) -> None:
+        def set_gpu_temperature() -> list[int]:
             temps: list[int] = []
             try:
                 # attempt to get GPU temperature using nvidia-smi (Linux)
@@ -19,7 +25,7 @@ class Linux(GenericPlatform):
 
             return temps
 
-        gpu_temps: list[int] = get_gpu_temperature()
+        gpu_temps: list[int] = set_gpu_temperature()
         if gpu_temps:
             for i, temp in enumerate(gpu_temps, 1):
                 self.set_sys_info_entry_key('GPU', f'GPU {i}', {
@@ -30,7 +36,7 @@ class Linux(GenericPlatform):
                 'Temperature (°C)': 'N/A',
             })
 
-    def get_disk_info(self):
+    def set_disk_partition_size(self):
         try:
             result = subprocess.run(['df', '-h'], capture_output=True, text=True)
             output_lines = result.stdout.strip().split('\n')
@@ -48,7 +54,7 @@ class Linux(GenericPlatform):
         except Exception as e:
             raise ValueError(f"Error retrieving disk information: {e}")
 
-    def get_network_hardware_info(self):
+    def set_network_info(self):
         result = subprocess.run(['ip', 'addr'], capture_output=True, text=True)
         output = result.stdout.strip()
         sections = re.split(r'\n(?=\d+:)', output)
@@ -80,17 +86,17 @@ class Linux(GenericPlatform):
 
             self.set_sys_info_entry_key('Network', interface_name, data)
 
-    def get_storage_info(self):
-        try:
-            result = subprocess.run(['lsblk', '-J', '--output', 'NAME,MOUNTPOINT,SIZE,ROTA,FSTYPE,MODEL,SERIAL,VENDOR'], capture_output=True, text=True)
-            if result.returncode == 0:
-                storage_info = result.stdout.strip()
-                # Process storage_info as needed
-                return storage_info
-            else:
-                raise ValueError(f"Error retrieving storage information: {result.stderr}")
-        except Exception as e:
-            raise ValueError(f"Error retrieving storage information: {e}")
+    # def set_storage_info(self):
+    #     try:
+    #         result = subprocess.run(['lsblk', '-J', '--output', 'NAME,MOUNTPOINT,SIZE,ROTA,FSTYPE,MODEL,SERIAL,VENDOR'], capture_output=True, text=True)
+    #         if result.returncode == 0:
+    #             storage_info = result.stdout.strip()
+    #             # Process storage_info as needed
+    #             return storage_info
+    #         else:
+    #             raise ValueError(f"Error retrieving storage information: {result.stderr}")
+    #     except Exception as e:
+    #         raise ValueError(f"Error retrieving storage information: {e}")
 
     def battery_information(self) -> None:
         try:

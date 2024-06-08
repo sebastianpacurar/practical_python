@@ -30,7 +30,8 @@ class ConsoleTable:
             headers=self._headers,
             showindex=range(1, len(self._data) + 1) if self._is_indexed else 'never',
             tablefmt=self._layout.value,
-            stralign=self._str_align
+            stralign=self._str_align,
+            numalign=self._str_align
         ).split('\n')
 
     def display(self) -> None:

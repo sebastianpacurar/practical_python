@@ -8,8 +8,14 @@ from scripts.device_info.platforms.mac.enums import BatteryInfo
 
 
 class Darwin(GenericPlatform):
-    def get_gpu_info(self) -> None:
-        def get_gpu_temperature() -> list[int]:
+    def set_platform_sys_data(self):
+        self.set_disk_partition_size()
+        self.set_storage_info()
+        self.set_network_info()
+        self.set_gpu_info()
+
+    def set_gpu_info(self) -> None:
+        def set_gpu_temperature() -> list[int]:
             temps: list[int] = []
             try:
                 # attempt to get GPU temperature using iStats (macOS)
@@ -25,7 +31,7 @@ class Darwin(GenericPlatform):
 
             return temps
 
-        gpu_temps: list[int] = get_gpu_temperature()
+        gpu_temps: list[int] = set_gpu_temperature()
         if gpu_temps:
             for i, temp in enumerate(gpu_temps, 1):
                 self.set_sys_info_entry_key('GPU', f'GPU {i}', {
@@ -36,7 +42,7 @@ class Darwin(GenericPlatform):
                 'Temperature (°C)': 'N/A',
             })
 
-    def __get_disk_info(self):
+    def set_disk_partition_size(self):
         partitions = psutil.disk_partitions(all=True)
         for partition in partitions:
             usage = psutil.disk_usage(partition.mountpoint)
@@ -50,26 +56,33 @@ class Darwin(GenericPlatform):
 
             self.set_sys_info_entry_key('Disks', partition.device, info)
 
-    def get_network_hardware_info(self):
+    def set_network_info(self):
         net_info = psutil.net_if_addrs()
+        network_interfaces = psutil.net_io_counters(pernic=True)
         for interf, addresses in net_info.items():
-            info = {
-                'MAC': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_LINK.name],
-                'IPv4': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET.name],
-                'IPv6': [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET6.name]
+            mac_addresses = [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_LINK.name]
+            ipv4_addresses = [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET.name]
+            ipv6_addresses = [addr.address for addr in addresses if addr.family.name == AddressFamily.AF_INET6.name]
+
+            ips_info = {
+                'MAC': '\n'.join(mac_addresses) if mac_addresses else '-',
+                'IPv4': '\n'.join(ipv4_addresses) if ipv4_addresses else '-',
+                'IPv6': '\n'.join(ipv6_addresses) if ipv6_addresses else '-'
             }
 
-            for k, v in info.items():
-                if isinstance(v, list) and len(v) == 1:
-                    info[k] = v[0]
-                elif len(v) > 1:
-                    info[k] = '\n'.join(v)
-                else:
-                    info[k] = '-'
+            if interf in network_interfaces:
+                stats = network_interfaces[interf]
+                bandwidth_info = {
+                    'Bytes Sent': stats.bytes_sent,
+                    'Bytes Received': stats.bytes_recv,
+                    'Packets Sent': stats.packets_sent,
+                    'Packets Received': stats.packets_recv,
+                }
+                ips_info.update(bandwidth_info)
 
-            self.set_sys_info_entry_key('Network', interf, info)
+            self.set_sys_info_entry_key('Network', interf, ips_info)
 
-    def get_storage_info(self) -> None:
+    def set_storage_info(self) -> None:
         try:
             info = subprocess.check_output(['diskutil', 'list'], text=True)
             disks = info.strip().split('\n\n')
