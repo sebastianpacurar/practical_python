@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 
 from scripts.device_info.platforms.GenericPlatform import GenericPlatform
@@ -48,31 +49,36 @@ class Linux(GenericPlatform):
             raise ValueError(f"Error retrieving disk information: {e}")
 
     def get_network_hardware_info(self):
-        result = subprocess.run(['ip', '-c', 'addr'], capture_output=True, text=True)
-        output_lines = result.stdout.strip().split('\n\n')
+        result = subprocess.run(['ip', 'addr'], capture_output=True, text=True)
+        output = result.stdout.strip()
+        sections = re.split(r'\n(?=\d+:)', output)
 
-        network_info = {}
-        for interface_info in output_lines:
-            lines = interface_info.split('\n')
+        # TODO: issue with multiple addresses under the same interface
+        for section in sections:
+            lines = section.strip().split('\n')
+            if not lines:
+                continue
+
             interface_name = lines[0].split(':')[1].strip()
-            mac_address = lines[1].split()[1]
+            mac_address = None
             ipv4_addresses = []
             ipv6_addresses = []
 
-            for line in lines[1:]:
-                if 'inet ' in line:
+            for line in lines:
+                if 'link/' in line:
+                    mac_address = line.split()[1]
+                elif 'inet ' in line:
                     ipv4_addresses.append(line.split()[1].split('/')[0])
                 elif 'inet6 ' in line:
                     ipv6_addresses.append(line.split()[1].split('/')[0])
 
             data = {
-                'MAC': mac_address,
+                'MAC': mac_address if mac_address else '-',
                 'IPv4': '\n'.join(ipv4_addresses) if ipv4_addresses else '-',
                 'IPv6': '\n'.join(ipv6_addresses) if ipv6_addresses else '-'
             }
 
             self.set_sys_info_entry_key('Network', interface_name, data)
-        return network_info
 
     def get_storage_info(self):
         try:
@@ -88,13 +94,15 @@ class Linux(GenericPlatform):
 
     def battery_information(self) -> None:
         try:
-            battery_info: list[str] = subprocess.check_output(
-                ['upower', '-i', '/org/freedesktop/UPower/devices/battery_BAT0'], text=True).strip().split('\n')
+            battery_info: list[str] = subprocess.check_output(['upower', '-i', '/org/freedesktop/UPower/devices/battery_BAT0'], text=True).strip().split('\n')
             for line in battery_info:
-                bat_key, bat_val = line.strip().split(': ', 1)
-                self.set_sys_info_entry_key('Battery', bat_key, bat_val)
+                pairs = line.strip().split(':')
+                # include only valid pairs, and exclude no value related keys
+                if len(pairs) == 2 and all([len(p) > 0 for p in pairs]):
+                    key, value = pairs
+                    self.set_sys_info_entry_key('Battery', key.strip(), value.strip())
         except subprocess.CalledProcessError:
-            pass
+            print('Issues encountered at "upower" command')
 
     def is_laptop(self) -> bool:
         return os.path.exists('/sys/class/power_supply/BAT0')
