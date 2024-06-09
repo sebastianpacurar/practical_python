@@ -1,4 +1,3 @@
-
 from abc import ABC, abstractmethod
 
 from scripts.utils_global.console_table.ConsoleTable import ConsoleTable
@@ -7,7 +6,6 @@ from scripts.utils_global.console_table.ConsoleTable import ConsoleTable
 class GenericPlatform(ABC):
     def __init__(self):
         self.sys_info: dict[str, str | dict] = {}  # TODO: this should be private by name mangling
-        print('Loading...')
         self.set_platform_sys_data()
 
     def set_sys_info_entry_key(self, key: str, entry_key: str, entry_value: str | dict) -> None:
@@ -27,12 +25,16 @@ class GenericPlatform(ABC):
 
     def print_detailed_format(self) -> None:
         for k, v in self.sys_info.items():
+            headers = ['Caption']
+            if len(v) == 0:
+                print(f'\nNo entries found for {k}\n')
+                continue
             data = []
             for name, description in v.items():
-                headers = ['Target'] + list(description.keys())
+                headers += list(description.keys())
                 data_row = list(description.values())
                 data.append([name] + data_row)
-            ConsoleTable(data, title=f'{k} Info:', headers=headers).display()
+            ConsoleTable(data, title=f'{k} Info:', headers=headers, clear_empty_cols=True).display()
 
     @abstractmethod
     def set_platform_sys_data(self):

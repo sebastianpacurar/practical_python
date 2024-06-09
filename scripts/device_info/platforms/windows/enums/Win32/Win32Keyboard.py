@@ -1,0 +1,27 @@
+from enum import Enum
+
+
+class Win32Keyboard(Enum):
+    Availability = 'Availability'
+    Caption = 'Caption'
+    ConfigManagerErrorCode = 'Config Manager Error Code'
+    ConfigManagerUserConfig = 'Config Manager User Config'
+    CreationClassName = 'Creation Class Name'
+    Description = 'Description'
+    DeviceID = 'Device ID'
+    ErrorCleared = 'Error Cleared'
+    ErrorDescription = 'Error Description'
+    InstallDate = 'Install Date'
+    IsLocked = 'Is Locked'
+    LastErrorCode = 'Last Error Code'
+    Layout = 'Layout'
+    Name = 'Name'
+    NumberOfFunctionKeys = 'Number Of Function Keys'
+    Password = 'Password'
+    PNPDeviceID = 'PNP Device ID'
+    PowerManagementCapabilities = 'Power Management Capabilities'
+    PowerManagementSupported = 'Power Management Supported'
+    Status = 'Status'
+    StatusInfo = 'Status Info'
+    SystemCreationClassName = 'System Creation Class Name'
+    SystemName = 'System Name'

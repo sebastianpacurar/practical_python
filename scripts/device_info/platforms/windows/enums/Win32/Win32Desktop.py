@@ -1,0 +1,25 @@
+from enum import Enum
+
+
+class Win32Desktop(Enum):
+    BorderWidth = 'Border Width'
+    Caption = 'Caption'
+    CoolSwitch = 'Cool Switch'
+    CursorBlinkRate = 'Cursor Blink Rate'
+    Description = 'Description'
+    DragFullWindows = 'Drag Full Windows'
+    GridGranularity = 'Grid Granularity'
+    IconSpacing = 'Icon Spacing'
+    IconTitleFaceName = 'Icon Title Face Name'
+    IconTitleSize = 'Icon Title Size'
+    IconTitleWrap = 'Icon Title Wrap'
+    Name = 'Name'
+    Pattern = 'Pattern'
+    ScreenSaverActive = 'Screen Saver Active'
+    ScreenSaverExecutable = 'Screen Saver Executable'
+    ScreenSaverSecure = 'Screen Saver Secure'
+    ScreenSaverTimeout = 'Screen Saver Timeout'
+    SettingID = 'Setting ID'
+    Wallpaper = 'Wallpaper'
+    WallpaperStretched = 'Wallpaper Stretched'
+    WallpaperTiled = 'Wallpaper Tiled'

@@ -1,18 +1,26 @@
 from enum import Enum
 
 
-class Win32IdeController(Enum):
+class Win32Fan(Enum):
+    ActiveCooling = 'Active Cooling'
     Availability = 'Availability'
     Caption = 'Caption'
     ConfigManagerErrorCode = 'Config Manager Error Code'
     ConfigManagerUserConfig = 'Config Manager User Config'
     CreationClassName = 'Creation Class Name'
     Description = 'Description'
+    DesiredSpeed = 'Desired Speed'
     DeviceID = 'Device ID'
     ErrorCleared = 'Error Cleared'
     ErrorDescription = 'Error Description'
     InstallDate = 'Install Date'
+    LastErrorCode = 'Last Error Code'
     Name = 'Name'
-    ProtocolSupported = 'Protocol Supported'
+    PNPDeviceID = 'PNP Device ID'
+    PowerManagementCapabilities = 'Power Management Capabilities'
+    PowerManagementSupported = 'Power Management Supported'
     Status = 'Status'
     StatusInfo = 'Status Info'
+    SystemCreationClassName = 'System Creation Class Name'
+    SystemName = 'System Name'
+    VariableSpeed = 'Variable Speed'

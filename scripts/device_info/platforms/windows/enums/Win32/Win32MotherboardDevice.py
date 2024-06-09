@@ -1,0 +1,26 @@
+from enum import Enum
+
+
+class Win32MotherboardDevice(Enum):
+    Availability = 'Availability'
+    Caption = 'Caption'
+    ConfigManagerErrorCode = 'Config Manager Error Code'
+    ConfigManagerUserConfig = 'Config Manager User Config'
+    CreationClassName = 'Creation Class Name'
+    Description = 'Description'
+    DeviceID = 'Device ID'
+    ErrorCleared = 'Error Cleared'
+    ErrorDescription = 'Error Description'
+    InstallDate = 'Install Date'
+    LastErrorCode = 'Last Error Code'
+    Name = 'Name'
+    PNPDeviceID = 'PNP Device ID'
+    PowerManagementCapabilities = 'Power Management Capabilities'
+    PowerManagementSupported = 'Power Management Supported'
+    PrimaryBusType = 'Primary Bus Type'
+    RevisionNumber = 'Revision Number'
+    SecondaryBusType = 'Secondary Bus Type'
+    Status = 'Status'
+    StatusInfo = 'Status Info'
+    SystemCreationClassName = 'System Creation Class Name'
+    SystemName = 'System Name'

@@ -20,7 +20,8 @@ def test_table_layouts(layout: Layout) -> None:
         headers=headers,
         tablefmt=layout.value,
         showindex='never',
-        stralign='center'
+        stralign='center',
+        numalign='center'
     ).split('\n')
     print('\n')
     table.display()
