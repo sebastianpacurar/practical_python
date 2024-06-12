@@ -15,5 +15,3 @@ if __name__ == '__main__':
             p = Linux()
         case _:
             raise RuntimeError("Unsupported platform")
-
-    p.print_detailed_format()
