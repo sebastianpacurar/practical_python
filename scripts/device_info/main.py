@@ -1,3 +1,4 @@
+import asyncio
 import platform
 
 from scripts.device_info.platforms.available_platforms import AvailablePlatforms
@@ -15,3 +16,6 @@ if __name__ == '__main__':
             p = Linux()
         case _:
             raise RuntimeError("Unsupported platform")
+
+    asyncio.run(p.set_platform_sys_data())
+    p.display_table()

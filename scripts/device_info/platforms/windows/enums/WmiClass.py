@@ -23,6 +23,14 @@ from scripts.device_info.platforms.windows.enums.Win32.Win32Processor import Win
 
 
 class WmiClass(Enum):
+    """
+    Enum representing various WMI classes used for system information retrieval on Windows.
+
+    Each enum entry consists of:
+    - Class Name: The name of the WMI class as per the WMI namespace.
+    - Python Class: The corresponding Python class used for handling data from this WMI class.
+    - Table Row ID: The specific row used to differentiate multiple entries (acts as an ID of the table, and is the first column).
+    """
     BASEBOARD = ('Win32_BaseBoard', Win32BaseBoard, Win32BaseBoard.Caption.name)
     MOTHERBOARD_DEVICE = ('Win32_MotherboardDevice', Win32MotherboardDevice, Win32MotherboardDevice.Caption.name)
     BATTERY = ('Win32_Battery', Win32Battery, Win32Battery.Caption.name)

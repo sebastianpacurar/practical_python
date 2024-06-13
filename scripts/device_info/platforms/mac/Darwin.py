@@ -4,7 +4,7 @@ import subprocess
 
 from scripts.device_info.platforms.GenericPlatform import GenericPlatform
 from scripts.device_info.platforms.mac.debugging import not_nested
-from scripts.device_info.platforms.mac.enum.system_profiler.SystemProfiler import SystemProfiler
+from scripts.device_info.platforms.mac.pydantic_models.system_profiler.SystemProfiler import SystemProfiler
 from scripts.utils_global.console_table.ConsoleTable import ConsoleTable
 
 
