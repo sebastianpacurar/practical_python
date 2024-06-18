@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class BatteryInfo(Enum):
+class SmartBatteryInfo(Enum):
     POST_CHARGE_WAIT_SECONDS = 'PostChargeWaitSeconds'
     BUILT_IN = 'built-in'
     APPLE_RAW_ADAPTER_DETAILS = 'AppleRawAdapterDetails'

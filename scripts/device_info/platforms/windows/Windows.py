@@ -73,16 +73,16 @@ class Windows(GenericPlatform):
                             continue
                         info[enum_prop.value] = result
                     self.set_sys_info_entry_key(header, row_value, info)
-        except AttributeError as e:
-            print(f"AttributeError processing WMI class {class_name}: {e}")
-        except TypeError as e:
-            print(f"TypeError processing WMI class {class_name}: {e}")
-        except ValueError as e:
-            print(f"ValueError processing WMI class {class_name}: {e}")
-        except asyncio.TimeoutError as e:
-            print(f"AsyncioError (TimeoutError) processing WMI class {class_name}: {e}")
-        except Exception as e:
-            print(f"Unexpected error processing WMI class {class_name}: {e}")
+        except AttributeError as ex:
+            print(f"AttributeError processing WMI class {class_name}: {ex}")
+        except TypeError as ex:
+            print(f"TypeError processing WMI class {class_name}: {ex}")
+        except ValueError as ex:
+            print(f"ValueError processing WMI class {class_name}: {ex}")
+        except asyncio.TimeoutError as ex:
+            print(f"AsyncioError (TimeoutError) processing WMI class {class_name}: {ex}")
+        except Exception as ex:
+            print(f"Unexpected error processing WMI class {class_name}: {ex}")
 
     def tabulate_content(self) -> None:
         for k, v in self.sys_info.items():

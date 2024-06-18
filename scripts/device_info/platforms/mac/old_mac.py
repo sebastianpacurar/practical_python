@@ -93,8 +93,8 @@
 #
 #                 self.set_sys_info_entry_key('Storage', disk_name, disk_data)
 #
-#         except Exception as e:
-#             print(f'Error fetching storage information: {e}')
+#         except Exception as ex:
+#             print(f'Error fetching storage information: {ex}')
 #
 #     def battery_information(self) -> None:
 #         try:
@@ -129,8 +129,8 @@
 #             if battery_data:
 #                 for i in BatteryInfo:
 #                     self.set_sys_info_entry_key('Battery', i.name, battery_data.get(i.value, 'Unknown'))
-#         except subprocess.CalledProcessError as e:
-#             print(f"An error occurred: {e}")
+#         except subprocess.CalledProcessError as ex:
+#             print(f"An error occurred: {ex}")
 
 
 # TODO: in progress
@@ -152,7 +152,7 @@
 #             for i in io_kit_objects:
 #                 self.set_sys_info_entry_key('Battery', i.name, io_kit_data.get(i.value, 'Unknown'))
 #
-#     except subprocess.CalledProcessError as e:
+#     except subprocess.CalledProcessError as ex:
 #         raise RuntimeError(f"Command failed with return code {e.returncode}: {e.stderr}")
 #
 #
