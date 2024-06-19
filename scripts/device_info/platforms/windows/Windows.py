@@ -71,6 +71,8 @@ class Windows(GenericPlatform):
                     for enum_prop, result in zip(target_enum, info_results):
                         if enum_prop.value == 'Caption' and len(info_results) > 0:
                             continue
+                        if type(result) is tuple:
+                            result = '\n'.join(map(str, result))
                         info[enum_prop.value] = result
                     self.set_sys_info_entry_key(header, row_value, info)
         except AttributeError as ex:

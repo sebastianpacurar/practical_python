@@ -2,8 +2,8 @@ import asyncio
 import re
 import subprocess
 import sys
-from typing import Any, Generator
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Generator
 
 
 def set_wmi_data_attribute(entity: Any, attr: str) -> str:
@@ -25,6 +25,8 @@ def set_wmi_data_attribute(entity: Any, attr: str) -> str:
         res = '-'
     else:
         res = attr_val
+        if attr == 'Size' or attr == 'Capacity' or attr == 'FreeSpace':
+            res = f'{round(int(attr_val) / (1024 ** 3), 2)} GB'
     return res
 
 
@@ -44,7 +46,7 @@ async def async_set_wmi_data_attribute(item: Any, attribute_name: str) -> Any:
 
 def prettify_wmi_class_name(name: str) -> str:
     """
-    Format class name into a readable string then return it. Treat USB as if it was Usb
+    Format class name into a readable string then return it. Treat exceptions differently (USB, OS, PnP)
 
     Args:
         name: a string being first parameter of a WmiClass enum value. This represents the WMI() attribute
@@ -56,6 +58,10 @@ def prettify_wmi_class_name(name: str) -> str:
     base = name[6:]
     if base.startswith('USB'):
         base = base.replace('USB', 'Usb')
+    elif base.startswith('OS'):
+        base = base.replace('OS', 'Os')
+    elif base.startswith('PnP'):
+        base = base.replace('PnP', 'Pnp')
     spaced = re.sub(r'(?<!^)(?=[A-Z])', ' ', base)
     prettified = spaced.title()
     return prettified

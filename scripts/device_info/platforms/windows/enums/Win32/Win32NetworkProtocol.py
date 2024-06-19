@@ -1,0 +1,27 @@
+from enum import Enum
+
+
+class Win32NetworkProtocol(Enum):
+    Caption = 'Caption'
+    ConnectionlessService = 'Connectionless Service'
+    Description = 'Description'
+    GuaranteesDelivery = 'Guarantees Delivery'
+    GuaranteesSequencing = 'Guarantees Sequencing'
+    InstallDate = 'Install Date'
+    MaximumAddressSize = 'Maximum Address Size'
+    MaximumMessageSize = 'Maximum Message Size'
+    MessageOriented = 'Message Oriented'
+    MinimumAddressSize = 'Minimum Address Size'
+    Name = 'Name'
+    PseudoStreamOriented = 'Pseudo Stream Oriented'
+    Status = 'Status'
+    SupportsBroadcasting = 'Supports Broadcasting'
+    SupportsConnectData = 'Supports Connect Data'
+    SupportsDisconnectData = 'Supports Disconnect Data'
+    SupportsEncryption = 'Supports Encryption'
+    SupportsExpeditedData = 'Supports Expedited Data'
+    SupportsFragmentation = 'Supports Fragmentation'
+    SupportsGracefulClosing = 'Supports Graceful Closing'
+    SupportsGuaranteedBandwidth = 'Supports Guaranteed Bandwidth'
+    SupportsMulticasting = 'Supports Multicasting'
+    SupportsQualityofService = 'Supports Quality of Service'
