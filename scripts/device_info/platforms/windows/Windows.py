@@ -5,7 +5,6 @@ from typing import Any, Coroutine
 from scripts.device_info.platforms.utils import (
     prettify_wmi_class_name,
     async_wmi_iter,
-    install_wmi_by_version,
     async_set_wmi_data_attribute,
     set_wmi_data_attribute,
 )
@@ -13,13 +12,14 @@ from scripts.device_info.platforms.windows.enums.WmiClass import WmiClass
 from scripts.device_info.platforms.GenericPlatform import GenericPlatform
 from scripts.utils_global.console_table.ConsoleTable import ConsoleTable
 
-WMI_VERSION = '1.5.1'
-
 
 class Windows(GenericPlatform):
     wmi_obj: Any = None
 
     async def set_platform_sys_data(self) -> None:
+        import wmi
+        self.wmi_obj = wmi.WMI()
+        print('Gathering Data... Might take up to 10-20 seconds, depending on your computer\'s setup')
         await self.fetch_wmi_data()
 
     def is_laptop(self) -> bool:
@@ -31,28 +31,11 @@ class Windows(GenericPlatform):
     def display_table(self) -> None:
         self.tabulate_content()
 
-    async def check_and_install_wmi(self) -> None:
-        """
-        Steps
-            1) Check for wmi if installed. If not then install it using the given version
-            2) Instantiate wmi_obj to WMI()
-        """
-        if self.wmi_obj is None:
-            try:
-                import wmi
-            except ModuleNotFoundError:
-                print("WMI package not found. Installing through pip...")
-                install_wmi_by_version(WMI_VERSION)
-            finally:
-                print('Gathering Data...')
-                self.wmi_obj = wmi.WMI()
-
     async def fetch_wmi_data(self) -> None:
         tasks: list[Coroutine[Any, None, None]] = [self.get_wmi_class_data(wmi_class) for wmi_class in WmiClass]
         await asyncio.gather(*tasks)
 
     async def get_wmi_class_data(self, wmi_class: WmiClass) -> None:
-        await self.check_and_install_wmi()
         class_name: str
         target_enum: Any
         row_name: str
@@ -76,15 +59,15 @@ class Windows(GenericPlatform):
                         info[enum_prop.value] = result
                     self.set_sys_info_entry_key(header, row_value, info)
         except AttributeError as ex:
-            print(f"AttributeError processing WMI class {class_name}: {ex}")
+            print(f'AttributeError processing WMI class {class_name}: {ex}')
         except TypeError as ex:
-            print(f"TypeError processing WMI class {class_name}: {ex}")
+            print(f'TypeError processing WMI class {class_name}: {ex}')
         except ValueError as ex:
-            print(f"ValueError processing WMI class {class_name}: {ex}")
+            print(f'ValueError processing WMI class {class_name}: {ex}')
         except asyncio.TimeoutError as ex:
-            print(f"AsyncioError (TimeoutError) processing WMI class {class_name}: {ex}")
+            print(f'AsyncioError (TimeoutError) processing WMI class {class_name}: {ex}')
         except Exception as ex:
-            print(f"Unexpected error processing WMI class {class_name}: {ex}")
+            print(f'Unexpected error processing WMI class {class_name}: {ex}')
 
     def tabulate_content(self) -> None:
         for k, v in self.sys_info.items():

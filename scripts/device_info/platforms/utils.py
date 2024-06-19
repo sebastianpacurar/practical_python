@@ -1,7 +1,5 @@
 import asyncio
 import re
-import subprocess
-import sys
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Generator
 
@@ -85,19 +83,3 @@ async def async_wmi_iter(wmi_class: Any, executor: ThreadPoolExecutor) -> Genera
         if item is None:
             break  # return gracefully, without causing StopIteration or StopAsyncIteration errors
         yield item
-
-
-def install_wmi_by_version(version: str) -> None:
-    """
-    Install a specific version of the WMI package.
-
-    Args:
-        version (str): The version of the WMI package to install.
-
-    Raises:
-        subprocess.CalledProcessError: If the installation fails.
-    """
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", f"wmi=={version}"])
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to install WMI version {version}: {e}")
